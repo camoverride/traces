@@ -1,0 +1,10 @@
+.venv
+chunks
+cam.jpg
+chunk_1.avi
+chunk_2.avi
+chunk_3.avi
+haarcascade_frontalface_default.xml
+overlay.avi
+overlay_dir
+play_dir

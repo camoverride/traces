@@ -264,4 +264,4 @@ if __name__ == "__main__":
     while True:
         detection = face_detected_mp()
         print(f"Detection Status: {detection}")
-        time.sleep(0.1)
+        time.sleep(1)

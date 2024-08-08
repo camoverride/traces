@@ -1,7 +1,8 @@
 import cv2
 import os
-import mediapipe as mp
 import subprocess
+import time
+import mediapipe as mp
 from picamera2 import Picamera2
 
 
@@ -263,3 +264,4 @@ if __name__ == "__main__":
     while True:
         detection = face_detected_mp()
         print(f"Detection Status: {detection}")
+        time.sleep(0.1)

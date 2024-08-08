@@ -163,7 +163,7 @@ def face_detected_mp(confidence_threshold=0.5):
     # Start the camera if it's a pi camera
     if get_user() == "pi":
         picam2 = Picamera2()
-        # picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
         picam2.start()
 
         frame = picam2.capture_array()
@@ -259,74 +259,9 @@ def stream_images(data_dir="overlay_dir"):
     #     print(x)
     #     time.sleep(3)
 
-# if __name__ == "__main__":
-#     # Test face detection
-#     while True:
-#         detection = face_detected_mp()
-#         print(f"Detection Status: {detection}")
-#         time.sleep(5)
-
-
-def initialize_pi_camera(retries=5, delay=2):
-    """Attempts to initialize the PiCamera, retrying if the camera is busy."""
-    for i in range(retries):
-        try:
-            picam2 = Picamera2()
-            picam2.start()
-            return picam2
-        except RuntimeError as e:
-            print(f"Attempt {i+1}/{retries}: Failed to initialize camera. Retrying in {delay} seconds...")
-            time.sleep(delay)
-    raise RuntimeError("Failed to initialize PiCamera after multiple attempts.")
-
-def face_detected_mp(confidence_threshold=0.5):
-    # Get a picture
-
-    # Start the camera if it's a Pi camera
-    if get_user() == "pi":
-        try:
-            picam2 = initialize_pi_camera()
-            frame = picam2.capture_array()
-            picam2.stop()
-        except RuntimeError as e:
-            print(e)
-            return False
-
-    # Start the camera if it's on a MacBook
-    else:
-        # Initialize the webcam
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            print("Error: Could not open webcam.")
-            return False
-
-        # Capture a single frame from the webcam
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Could not read frame.")
-            cap.release()  # Ensure release on error
-            return False
-
-        # Release the webcam
-        cap.release()
-
-    # Convert the image from BGR to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    mp_face_detection = mp.solutions.face_detection
-
-    with mp_face_detection.FaceDetection(min_detection_confidence=confidence_threshold) as face_detection:
-        # Process the frame and detect faces
-        results = face_detection.process(frame_rgb)
-        
-        # Check if any faces are detected
-        if results.detections:
-            return True
-        else:
-            return False
-
 if __name__ == "__main__":
     # Test face detection
     while True:
         detection = face_detected_mp()
         print(f"Detection Status: {detection}")
+        time.sleep(0.5)

@@ -159,31 +159,6 @@ def face_detected_mp(confidence_threshold=0.5):
             return False
 
 
-def overlay_faces():
-    """
-    """
-    if face_detected_mp():
-        print("face detected - saving frames from video")
-        save_frames_from_video(camera_index=0,
-                            num_chunks=4,
-                            chunk_duration=5,
-                            output_dir="chunks")
-
-        print("overlaying frames")
-        chunk_dirs = [os.path.join(("chunks"), d) for d in os.listdir("chunks") if "chunks_" in d]
-        overlay_frames_from_dirs(chunk_dirs=chunk_dirs,
-                                output_dir="overlay_dir",
-                                alpha=0.5)
-        
-        print("recording detection time")
-        with open("recording_time.txt", "w") as f:
-            f.write(str(datetime.now()))
-
-    else:
-        print("no face!")
-        time.sleep(5)
-
-
 def stream_images(data_dir="overlay_dir"):
     file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
 
@@ -231,5 +206,13 @@ def stream_images(data_dir="overlay_dir"):
 
 #     cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    stream_images(data_dir="overlay_dir")
+# if __name__ == "__main__":
+#     stream_images(data_dir="overlay_dir")
+
+
+
+    # # Works as intended
+    # while True:
+    #     x = face_detected_mp()
+    #     print(x)
+    #     time.sleep(3)

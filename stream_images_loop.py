@@ -19,7 +19,6 @@ def copy_folder(src, dst):
         
         # Copy the source folder to the destination
         shutil.copytree(src, dst)
-        print(f"Copied folder '{src}' to '{dst}' successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -36,8 +35,7 @@ if __name__ == "__main__":
 
         # If there is new data, first copy it to the play folder so it can't be overwritten by the image wrting function
         if current_capture_datetime != capture_datetime:
-            print("OOOOOO")
-
+            print(f"New imagesd detected. Copying them to the play_dir and streaming them...")
             copy_folder(src="overlay_dir", dst="play_dir")
             capture_datetime = current_capture_datetime
 

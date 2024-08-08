@@ -8,3 +8,7 @@ Monitor:
 - `WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90`
 - `export DISPLAY=:0`
 
+Python requirements:
+- `python -m venv --system-site-packages .venv` (system-site-packages so we get the `picamera` package.)
+- `source .venv/bin/activate`
+- `pip install -r requirements.txt`

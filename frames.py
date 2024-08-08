@@ -139,6 +139,7 @@ def face_detected_mp(confidence_threshold=0.5):
     ret, frame = cap.read()
     if not ret:
         print("Error: Could not read frame.")
+        cap.release()  # Ensure release on error
         return False
 
     # Release the webcam
@@ -179,6 +180,7 @@ def overlay_faces():
             f.write(str(datetime.now()))
 
     else:
+        print("no face!")
         time.sleep(5)
 
 
@@ -196,16 +198,38 @@ def stream_images(data_dir="overlay_dir"):
         if key == ord("q"):
             break
 
+    # cv2.destroyAllWindows()
 
+
+# if __name__ == "__main__":
+#     while True:
+#         # overlay_faces()
+#         stream_images(data_dir="overlay_dir")
+#         # time.sleep(1)  # Add a delay between iterations
+
+
+# def image_generator(data_dir="overlay_dir"):
+#     while True:
+#         file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
+#         for file in sorted(file_paths):
+#             yield file
+
+# def stream_images(data_dir="overlay_dir"):
+#     img_gen = image_generator(data_dir)
+
+#     while True:
+#         file = next(img_gen)
+#         frame = cv2.imread(file)
+#         cv2.imshow("f", frame)
+
+#         # Wait for user input
+#         key = cv2.waitKey(20)  # Adjust as needed to control the display speed
+
+#         # Exit if 'q' is pressed
+#         if key == ord("q"):
+#             break
+
+#     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    # Example usage
-    
-    # thread_1 = Thread(target=overlay_faces, args=())
-    # thread_1.start()
-
-    # thread_2 = Thread(target=stream_images, args=("overlay_dir",))
-    # thread_2.start()    
-
-    overlay_faces()
-    # stream_images(data_dir="overlay_dir")
+    stream_images(data_dir="overlay_dir")

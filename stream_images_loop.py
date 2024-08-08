@@ -36,14 +36,13 @@ if __name__ == "__main__":
 
         # If there is new data, first copy it to the play folder so it can't be overwritten by the image wrting function
         if current_capture_datetime != capture_datetime:
+            print("OOOOOO")
 
             copy_folder(src="overlay_dir", dst="play_dir")
-
             capture_datetime = current_capture_datetime
 
         # Stream images from ths folder!
         stream_images(data_dir="play_dir")
-
 
 
         # # If the data is unchanged, wait 1 second and check again.

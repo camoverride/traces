@@ -1,16 +1,34 @@
 import cv2
 import os
-import time
-from datetime import datetime
 import mediapipe as mp
+import subprocess
 
+
+
+def get_user():
+    # Run the `whoami` command
+    result = subprocess.run(["whoami"], capture_output=True, text=True, check=True)
+    # Return the output, stripped of any trailing newline
+    return result.stdout.strip()
 
 
 def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, output_dir="chunks"):
-    cap = cv2.VideoCapture(camera_index)
+    # Start the camera if it's a pi camera
+    if get_user() == "pi":
+        # Set up the camera
+        picam2 = Picamera2()
+        # picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
+        picam2.start()
+        fps = 30
+
+    # Start the camera if it's on a macbook
+    else:
+        cap = cv2.VideoCapture(0)
+        fps = cap.get(cv2.CAP_PROP_FPS)
     
-    fps = cap.get(cv2.CAP_PROP_FPS)
+
     chunk_frame_count = int(chunk_duration * fps)
+    
     chunk_index = 1
     
     for _ in range(num_chunks):
@@ -19,9 +37,13 @@ def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, outpu
         os.makedirs(chunk_dir, exist_ok=True)
         
         for frame_num in range(chunk_frame_count):
-            ret, frame = cap.read()
-            if not ret:
-                break
+
+            if get_user() == "pi":
+                frame = picam2.capture_array()
+            else:
+                ret, frame = cap.read()
+                if not ret:
+                    break
             frame_filename = os.path.join(chunk_dir, f"frame_{frame_num:04d}.png")
             cv2.imwrite(frame_filename, frame)
         
@@ -31,8 +53,13 @@ def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, outpu
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
-    cap.release()
-    cv2.destroyAllWindows()
+    if get_user() == "pi":
+        picam2.stop()
+        cv2.destroyAllWindows()
+    
+    else:
+        cap.release()
+        cv2.destroyAllWindows() # TODO: is this necessary here?
 
 
 def alpha_blend_images(image1, image2, alpha=0.5):
@@ -129,21 +156,34 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 def face_detected_mp(confidence_threshold=0.5):
-    # Initialize the webcam
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return False
-    
-    # Capture a single frame from the webcam
-    ret, frame = cap.read()
-    if not ret:
-        print("Error: Could not read frame.")
-        cap.release()  # Ensure release on error
-        return False
+    # Get a picture
 
-    # Release the webcam
-    cap.release()
+    # Start the camera if it's a pi camera
+    if get_user() == "pi":
+        picam2 = Picamera2()
+        # picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
+        picam2.start()
+
+        frame = picam2.capture_array()
+        picam2.stop()
+
+    # Start the camera if it's on a macbook
+    else:
+        # Initialize the webcam
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("Error: Could not open webcam.")
+            return False
+    
+        # Capture a single frame from the webcam
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame.")
+            cap.release()  # Ensure release on error
+            return False
+
+        # Release the webcam
+        cap.release()
 
     # Convert the image from BGR to RGB
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

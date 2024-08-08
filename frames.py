@@ -260,5 +260,6 @@ def stream_images(data_dir="overlay_dir"):
 
 if __name__ == "__main__":
     # Test face detection
-    detection = face_detected_mp()
-    print(f"Detection Status: {detection}")
+    while True:
+        detection = face_detected_mp()
+        print(f"Detection Status: {detection}")

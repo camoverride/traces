@@ -12,3 +12,8 @@ Python requirements:
 - `python -m venv --system-site-packages .venv` (system-site-packages so we get the `picamera` package.)
 - `source .venv/bin/activate`
 - `pip install -r requirements.txt`
+
+If there's an issue with jpeg:
+- `pip install numpy==1.24.3`
+- `pip uninstall simplejpeg`
+- `pip install --no-cache-dir simplejpeg`

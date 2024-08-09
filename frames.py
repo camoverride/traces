@@ -1,61 +1,68 @@
-import cv2
+from datetime import datetime
 import os
 import subprocess
 import time
+import cv2
 import mediapipe as mp
-from picamera2 import Picamera2
 
 
 
 def get_user():
+    """
+    Get the user as a string. Raspberry Pi's should have the username "pi"
+    """
     # Run the `whoami` command
     result = subprocess.run(["whoami"], capture_output=True, text=True, check=True)
     # Return the output, stripped of any trailing newline
     return result.stdout.strip()
 
+USER = get_user()
 
-def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, output_dir="chunks"):
-    # Start the camera if it's a pi camera
-    if get_user() == "pi":
+if USER == "pi":
+    from picamera2 import Picamera2
+
+
+def save_frames_from_video(duration, output_dir, output_base_dir):
+    """
+    Saves `duration` (seconds) of frames to a sub-directory inside the `output_dir`.
+    The sub-directory of frames is named after the datetime.
+    """
+    # Start the camera if it's a Raspberry Pi camera
+    if USER == "pi":
         # Set up the camera
         picam2 = Picamera2()
         picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
         picam2.start()
         fps = 30
 
-    # Start the camera if it's on a macbook
+    # Start the camera if it's on a MacBook
     else:
         cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)
     
+    # How many frames to record?
+    chunk_frame_count = int(duration * fps)
 
-    chunk_frame_count = int(chunk_duration * fps)
+    # Create directory for the chunk
+    chunk_dir = f"{output_base_dir}/{output_dir}"
+    os.makedirs(chunk_dir, exist_ok=True)
     
-    chunk_index = 1
-    
-    for _ in range(num_chunks):
-        # Create directory for each chunk
-        chunk_dir = f"{output_dir}/chunks_{chunk_index}"
-        os.makedirs(chunk_dir, exist_ok=True)
-        
-        for frame_num in range(chunk_frame_count):
+    for frame_num in range(chunk_frame_count):
 
-            if get_user() == "pi":
-                frame = picam2.capture_array()
-            else:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-            frame_filename = os.path.join(chunk_dir, f"frame_{frame_num:04d}.png")
-            cv2.imwrite(frame_filename, frame)
-        
-        chunk_index += 1
-        
-        # Check if you want to stop capturing
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        if USER == "pi":
+            frame = picam2.capture_array()
+        else:
+            ret, frame = cap.read()
+            if not ret:
+                break
+        frame_filename = os.path.join(chunk_dir, f"frame_{frame_num:04d}.png")
+        cv2.imwrite(frame_filename, frame)
 
-    if get_user() == "pi":
+    # Check if you want to stop capturing. TODO: pause some other way
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        pass
+
+    if USER == "pi":
         picam2.stop()
         picam2.close()
         cv2.destroyAllWindows()
@@ -159,10 +166,11 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 def face_detected_mp(confidence_threshold=0.5):
+    return True
     # Get a picture
 
     # Start the camera if it's a pi camera
-    if get_user() == "pi":
+    if USER == "pi":
         picam2 = Picamera2()
         picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
         picam2.start()

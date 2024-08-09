@@ -95,7 +95,7 @@ def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha)
     - alpha: Blending factor for overlaying frames.
     """
     # Correct the shape to match your frame dimensions
-    frame_count = 150
+    frame_count = 15 * 5 #150 // should not be hard-coded!
     height = HEIGHT
     width = WIDTH
     channels = 3

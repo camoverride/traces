@@ -27,4 +27,4 @@ You need at least two data files to begin, scp them over or generate them from `
 - `python overlay_loop.py`
 - `python stream_images_loop.py`
 
-currently SLOW - takes ~5 mins to save frames, 
+currently takes about 40 seconds to save 5 sec video to memmap and 30 secs to create composites from two 5s memmaps

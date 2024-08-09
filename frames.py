@@ -19,7 +19,7 @@ def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, outpu
     if get_user() == "pi":
         # Set up the camera
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1920, 1080)}))
         picam2.start()
         fps = 30
 
@@ -164,7 +164,7 @@ def face_detected_mp(confidence_threshold=0.5):
     # Start the camera if it's a pi camera
     if get_user() == "pi":
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1000, 1000)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1920, 1080)}))
         picam2.start()
 
         frame = picam2.capture_array()

@@ -21,6 +21,9 @@ If there's an issue with jpeg:
 
 ## Play
 
+You need at least two data files to begin, scp them over or generate them from `frames.py`:
+- `_composites.dat` and `composites.dat`
+
 - `python overlay_loop.py`
 - `python stream_images_loop.py`
 

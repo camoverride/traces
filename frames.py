@@ -1,7 +1,8 @@
-import os
+import shutil
 import subprocess
 import time
 import cv2
+import numpy as np
 import mediapipe as mp
 
 
@@ -21,10 +22,10 @@ if USER == "pi":
     from picamera2 import Picamera2
 
 
-def save_frames_from_video(duration, width, height, output_dir):
+def save_frames_to_memmap(duration, width, height, memmap_filename):
     """
-    Saves `duration` (seconds) of frames to a sub-directory inside the `output_dir`.
-    The sub-directory of frames is named after the datetime.
+    Saves `duration` (seconds) of frames to a numpy memmap object.
+    The memmap file is named `memmap_filename`.
     """
     # Start the camera if it's a Raspberry Pi camera
     if USER == "pi":
@@ -43,32 +44,32 @@ def save_frames_from_video(duration, width, height, output_dir):
     # How many frames to record?
     frame_count = int(duration * fps)
 
-    # Create directory for the chunk
-    os.makedirs(output_dir, exist_ok=True)
+    # Create a memory-mapped array to store the frames
+    memmap_shape = (frame_count, height, width, 3)
+    memmap = np.memmap(memmap_filename, dtype='uint8', mode='w+', shape=memmap_shape)
     
     for frame_num in range(frame_count):
 
         if USER == "pi":
             frame = picam2.capture_array()
         else:
+            time.sleep(0.1) # So first images aren't black/
             ret, frame = cap.read()
             if not ret:
                 break
-        frame_filename = os.path.join(output_dir, f"frame_{frame_num:04d}.png")
-        cv2.imwrite(frame_filename, frame)
 
-    # Check if you want to stop capturing. TODO: pause some other way
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        pass
+        memmap[frame_num] = frame
+
+    # Finalize the memmap file
+    memmap.flush()
 
     if USER == "pi":
         picam2.stop()
         picam2.close()
-        cv2.destroyAllWindows()
     
     else:
         cap.release()
-        cv2.destroyAllWindows() # TODO: is this necessary here?
+        cv2.destroyAllWindows()
 
 
 def alpha_blend_images(image1, image2, alpha=0.5):
@@ -78,48 +79,34 @@ def alpha_blend_images(image1, image2, alpha=0.5):
     return cv2.addWeighted(image1, alpha, image2, 1 - alpha, 0)
 
 
-def overlay_frames_from_dirs(chunk_dirs, output_dir='overlay_dir', alpha=0.5):
+def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha=0.5):
     """
-    Overlay frames from multiple directories and save the composite frames
-    into an output directory.
+    Overlay frames from multiple memmaps and save the composite frames
+    into an output memmap file.
     
     Parameters:
-    - chunk_dirs: List of directories containing frames for each chunk.
-    - output_dir: Directory where the composite frames will be saved.
+    - memmap_filenames: List of memmap filenames containing frames for each chunk.
+    - output_memmap_filename: Filename where the composite frames will be saved.
     - alpha: Blending factor for overlaying frames.
     """
-    os.makedirs(output_dir, exist_ok=True)
+    # Correct the shape to match your frame dimensions
+    frame_count = 150
+    height = 720
+    width = 1280
+    channels = 3
+
+    memmaps = [np.memmap(filename, dtype='uint8', mode='r', shape=(frame_count, height, width, channels)) for filename in memmap_filenames]
     
-    # Read the first directory to get frame size and list of frames
-    first_chunk_dir = chunk_dirs[0]
-    frame_files = sorted(os.listdir(first_chunk_dir))
-    
-    if not frame_files:
-        print("No frames found in the first directory.")
-        return
-    
-    # Create a list of paths for each frame
-    frame_paths = {frame_file: [os.path.join(chunk_dir, frame_file) for chunk_dir in chunk_dirs]
-                   for frame_file in frame_files}
-    
-    # Iterate over each frame file
-    for frame_file, paths in frame_paths.items():
-        frames = [cv2.imread(path) for path in paths]
-        
-        # if None in frames:
-        #     print(f"Error loading frames for {frame_file}.")
-        #     continue
-        
-        # Initialize the composite frame with the first chunk
-        composite_frame = frames[0]
-        
-        # Blend each subsequent frame with the composite frame
-        for frame in frames[1:]:
-            composite_frame = alpha_blend_images(composite_frame, frame, alpha)
-        
-        # Save the composite frame
-        output_frame_path = os.path.join(output_dir, frame_file)
-        cv2.imwrite(output_frame_path, composite_frame)
+    # Create output memmap
+    output_memmap = np.memmap(output_memmap_filename, dtype='uint8', mode='w+', shape=(frame_count, height, width, channels))
+
+    for frame_num in range(frame_count):
+        composite_frame = memmaps[0][frame_num]
+        for memmap in memmaps[1:]:
+            composite_frame = alpha_blend_images(composite_frame, memmap[frame_num], alpha)
+        output_memmap[frame_num] = composite_frame
+
+    output_memmap.flush()
 
 
 # Initialize MediaPipe Face Detection
@@ -173,24 +160,64 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
             return False
 
 
-def stream_images(data_dir):
-    file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
+def stream_memmap_frames(memmap_filename):
+    memmap = np.memmap(memmap_filename, dtype='uint8', mode='r')
+    
+    # Print the shape of the memmap to debug
+    print(f"Memmap shape: {memmap.shape}")
 
-    for file in sorted(file_paths):
-        frame = cv2.imread(file)
-        cv2.imshow("window",frame)
+    if memmap.ndim == 1:
+        # If the shape is 1D, calculate the correct shape
+        total_elements = memmap.size
+        height = 720
+        width = 1280
+        channels = 3
+        
+        # Calculate the frame count
+        frame_count = total_elements // (height * width * channels)
+        
+        # Reshape the memmap to the correct 4D shape
+        memmap = memmap.reshape((frame_count, height, width, channels))
+
+    frame_count, height, width, channels = memmap.shape
+
+    for frame_num in range(frame_count):
+        frame = memmap[frame_num]
+        cv2.imshow("window", frame)
 
         # Wait for user input
-        key = cv2.waitKey(20) # TODO: calculate fps
+        key = cv2.waitKey(20)  # Adjust this to match the desired FPS
         
         # Exit if 'q' is pressed
         if key == ord("q"):
             break
 
 
+def copy_file(src, dst):
+    """
+    Copies a file from the source path to the destination path.
+    
+    Parameters:
+    - src: The source file path.
+    - dst: The destination file path.
+    """
+    try:
+        shutil.copy2(src, dst)
+        print(f"File copied successfully from {src} to {dst}")
+    except FileNotFoundError:
+        print(f"Source file not found: {src}")
+    except PermissionError:
+        print(f"Permission denied: Unable to write to {dst}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
 if __name__ == "__main__":
-    # Test face detection
-    while True:
-        detection = face_detected_mp()
-        print(f"Detection Status: {detection}")
-        time.sleep(0.5)
+    # # Example usage
+    # save_frames_to_memmap(10, 640, 480, 'frames_chunk1.dat')
+    # save_frames_to_memmap(10, 640, 480, 'frames_chunk2.dat')
+
+    # overlay_frames_from_memmaps(['1.dat', '2.dat'], '2.dat')
+
+    stream_memmap_frames('2.dat')

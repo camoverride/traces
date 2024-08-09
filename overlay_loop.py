@@ -1,25 +1,38 @@
 import time
-from frames import face_detected_mp, save_frames_from_video, overlay_frames_from_dirs
+from frames import face_detected_mp, save_frames_to_memmap, overlay_frames_from_memmaps, copy_file
 
 
 
-def overlay_faces(duration, width, height, frames_dir, composites_dir, confidence_threshold, alpha):
+def overlay_faces(duration,
+                  width,
+                  height,
+                  new_images_memmap,
+                  existing_composite_images_memmap,
+                  new_composite_images_memmap,
+                  confidence_threshold,
+                  alpha):
     """
-    Records `duration` seconds of video and writes them to the `frames_dir`,
-    overwriting any data that's still there. Then create composite images
-    that are an `alpha` blend of the existing images from `composites_dir` and
-    the new images from `frames_dir`.
+    Records `duration` seconds of video (`width` x `height`) and writes it to
+    `new_images`.dat, which is a np.memmap file. This memmap is then combined with
+    the existing `composite_images`.dat to form new composites. There is a
+    `confidence_threshold` for face detection and an `alpha` for blending the composites.
     """
     if face_detected_mp(width=width, height=height, confidence_threshold=confidence_threshold):
         # Save the frames
         print("Face detected - saving frames...")
-        save_frames_from_video(duration=duration, width=width, height=height, output_dir=frames_dir)
+        save_frames_to_memmap(duration=duration,
+                              width=width,
+                              height=height,
+                              memmap_filename=new_images_memmap)
 
         # Overlay the images
         print("Overlaying frames ...")
-        overlay_frames_from_dirs(chunk_dirs=[frames_dir, composites_dir],
-                                output_dir=composites_dir,
-                                alpha=alpha)
+        overlay_frames_from_memmaps(memmap_filenames=[new_images_memmap, existing_composite_images_memmap],
+                                    output_memmap_filename=new_composite_images_memmap,
+                                    alpha=alpha)
+        
+        # The `new_composite_images_memmap` is now the `existing_composite_images_memmap`
+        copy_file(src=new_composite_images_memmap, dst=existing_composite_images_memmap)
 
     else:
         print("No face detected!")
@@ -33,9 +46,10 @@ if __name__ == "__main__":
 
     while True:
         overlay_faces(duration=5,
-                      width=1080,
-                      height=1920,
-                      frames_dir="frames",
-                      composites_dir="composites",
+                      width=1280,#1080,
+                      height=720,#1920,
+                      new_images_memmap="current_frames.dat",
+                      existing_composite_images_memmap="_composites.dat",
+                      new_composite_images_memmap="composites.dat",
                       confidence_threshold=0.5,
                       alpha=0.5)

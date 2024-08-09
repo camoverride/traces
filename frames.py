@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import time
@@ -24,6 +25,12 @@ USER = get_user()
 
 if USER == "pi":
     from picamera2 import Picamera2
+    import logging
+
+    # Set the log level to ERROR to suppress INFO and WARNING messages
+    logging.getLogger('picamera2').setLevel(logging.ERROR)
+    logging.getLogger('libcamera').setLevel(logging.ERROR)
+    os.environ['LIBCAMERA_LOG_LEVELS'] = '*:0'
 
 
 def save_frames_to_memmap(duration, width, height, memmap_filename):

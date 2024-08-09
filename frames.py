@@ -1,4 +1,3 @@
-from datetime import datetime
 import os
 import subprocess
 import time
@@ -22,7 +21,7 @@ if USER == "pi":
     from picamera2 import Picamera2
 
 
-def save_frames_from_video(duration, output_dir):
+def save_frames_from_video(duration, width, height, output_dir):
     """
     Saves `duration` (seconds) of frames to a sub-directory inside the `output_dir`.
     The sub-directory of frames is named after the datetime.
@@ -31,7 +30,8 @@ def save_frames_from_video(duration, output_dir):
     if USER == "pi":
         # Set up the camera
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888",
+                                                                   "size": (width, height)}))
         picam2.start()
         fps = 30
 
@@ -55,7 +55,6 @@ def save_frames_from_video(duration, output_dir):
             if not ret:
                 break
         frame_filename = os.path.join(output_dir, f"frame_{frame_num:04d}.png")
-        print(f"saving {frame_filename} ...")
         cv2.imwrite(frame_filename, frame)
 
     # Check if you want to stop capturing. TODO: pause some other way
@@ -81,7 +80,8 @@ def alpha_blend_images(image1, image2, alpha=0.5):
 
 def overlay_frames_from_dirs(chunk_dirs, output_dir='overlay_dir', alpha=0.5):
     """
-    Overlay frames from multiple directories and save the composite frames into an output directory.
+    Overlay frames from multiple directories and save the composite frames
+    into an output directory.
     
     Parameters:
     - chunk_dirs: List of directories containing frames for each chunk.
@@ -122,57 +122,18 @@ def overlay_frames_from_dirs(chunk_dirs, output_dir='overlay_dir', alpha=0.5):
         cv2.imwrite(output_frame_path, composite_frame)
 
 
-def face_detected_cv():
-    # Initialize the webcam
-    cap = cv2.VideoCapture(0)  # 0 is usually the default camera
-
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return False
-
-    # Capture a single frame
-    ret, frame = cap.read()
-
-    # Release the webcam
-    cap.release()
-
-    if not ret:
-        print("Error: Could not read frame from webcam.")
-        return False
-
-    # Load the pre-trained Haar Cascade classifier
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-
-    # Convert the image to grayscale
-    gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # Detect faces in the image
-    faces = face_cascade.detectMultiScale(
-        gray_image,
-        scaleFactor=1.1,
-        minNeighbors=10,  # Increase this to reduce false positives
-        minSize=(30, 30)
-    )
-
-    # Check if any faces are detected
-    if len(faces) > 0:
-        return True
-    else:
-        return False
-
-
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
-def face_detected_mp(confidence_threshold=0.5):
-    return True
+def face_detected_mp(width, height, confidence_threshold=0.5):
     # Get a picture
 
     # Start the camera if it's a pi camera
     if USER == "pi":
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888",
+                                                                   "size": (width, height)}))
         picam2.start()
 
         frame = picam2.capture_array()
@@ -188,6 +149,7 @@ def face_detected_mp(confidence_threshold=0.5):
             return False
     
         # Capture a single frame from the webcam
+        time.sleep(1) # pause required or first image will be murky and dark
         ret, frame = cap.read()
         if not ret:
             print("Error: Could not read frame.")

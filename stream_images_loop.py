@@ -34,13 +34,13 @@ if __name__ == "__main__":
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-
     while True:
         # Get the current capture time of the images.
         current_frame_capture_time = time.strftime('%Y-%m-%d %H:%M:%S',
                                                    time.localtime(os.path.getmtime("frames/frame_0000.png")))
 
-        # If there is new data, first copy it to the play folder so it can't be overwritten by the image wrting function
+        # If there is new data, first copy it to the play folder
+        # so it can't be overwritten by the image wrting function
         if current_frame_capture_time != last_frame_capture_time:
             print("New images detected...")
 

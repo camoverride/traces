@@ -7,6 +7,9 @@ import mediapipe as mp
 
 
 
+WIDTH, HEIGHT = 1080, 1920
+
+
 def get_user():
     """
     Get the user as a string. Raspberry Pi's should have the username "pi"
@@ -91,8 +94,8 @@ def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha)
     """
     # Correct the shape to match your frame dimensions
     frame_count = 150
-    height = 720
-    width = 1280
+    height = HEIGHT
+    width = WIDTH
     channels = 3
 
     memmaps = [np.memmap(filename, dtype='uint8', mode='r', shape=(frame_count, height, width, channels)) for filename in memmap_filenames]
@@ -169,8 +172,8 @@ def stream_memmap_frames(memmap_filename):
     if memmap.ndim == 1:
         # If the shape is 1D, calculate the correct shape
         total_elements = memmap.size
-        height = 720
-        width = 1280
+        height = HEIGHT
+        width = WIDTH
         channels = 3
         
         # Calculate the frame count

@@ -17,3 +17,11 @@ If there's an issue with jpeg:
 - `pip install numpy==1.24.3`
 - `pip uninstall simplejpeg`
 - `pip install --no-cache-dir simplejpeg`
+
+
+## Play
+
+- `python overlay_loop.py`
+- `python stream_images_loop.py`
+
+currently SLOW - takes ~5 mins to save frames, 

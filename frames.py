@@ -19,7 +19,7 @@ def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, outpu
     if get_user() == "pi":
         # Set up the camera
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1920, 1080)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
         picam2.start()
         fps = 30
 
@@ -164,7 +164,7 @@ def face_detected_mp(confidence_threshold=0.5):
     # Start the camera if it's a pi camera
     if get_user() == "pi":
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1920, 1080)}))
+        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (1080, 1920)}))
         picam2.start()
 
         frame = picam2.capture_array()
@@ -217,49 +217,6 @@ def stream_images(data_dir="overlay_dir"):
         if key == ord("q"):
             break
 
-    # cv2.destroyAllWindows()
-
-
-# if __name__ == "__main__":
-#     while True:
-#         # overlay_faces()
-#         stream_images(data_dir="overlay_dir")
-#         # time.sleep(1)  # Add a delay between iterations
-
-
-# def image_generator(data_dir="overlay_dir"):
-#     while True:
-#         file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
-#         for file in sorted(file_paths):
-#             yield file
-
-# def stream_images(data_dir="overlay_dir"):
-#     img_gen = image_generator(data_dir)
-
-#     while True:
-#         file = next(img_gen)
-#         frame = cv2.imread(file)
-#         cv2.imshow("f", frame)
-
-#         # Wait for user input
-#         key = cv2.waitKey(20)  # Adjust as needed to control the display speed
-
-#         # Exit if 'q' is pressed
-#         if key == ord("q"):
-#             break
-
-#     cv2.destroyAllWindows()
-
-# if __name__ == "__main__":
-#     stream_images(data_dir="overlay_dir")
-
-
-
-    # # Works as intended
-    # while True:
-    #     x = face_detected_mp()
-    #     print(x)
-    #     time.sleep(3)
 
 if __name__ == "__main__":
     # Test face detection

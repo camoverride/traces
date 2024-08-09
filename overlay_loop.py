@@ -46,8 +46,8 @@ if __name__ == "__main__":
 
     while True:
         overlay_faces(duration=5,
-                      width=1280,#1080,
-                      height=720,#1920,
+                      width=1080, #1280
+                      height=1920, #720
                       new_images_memmap="current_frames.dat",
                       existing_composite_images_memmap="_composites.dat",
                       new_composite_images_memmap="composites.dat",

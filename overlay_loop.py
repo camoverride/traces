@@ -6,7 +6,7 @@ from frames import face_detected_mp, save_frames_to_memmap, overlay_frames_from_
 
 
 WIDTH, HEIGHT = 1080, 1920
-WIDTH, HEIGHT = 1280, 720
+# WIDTH, HEIGHT = 1280, 720
 
 
 def overlay_faces(duration,

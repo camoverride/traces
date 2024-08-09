@@ -8,7 +8,7 @@ import mediapipe as mp
 
 
 WIDTH, HEIGHT = 1080, 1920
-WIDTH, HEIGHT = 1280, 720
+# WIDTH, HEIGHT = 1280, 720
 
 
 def get_user():

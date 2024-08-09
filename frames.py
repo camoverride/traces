@@ -56,6 +56,7 @@ def save_frames_from_video(duration, output_dir, output_base_dir):
             if not ret:
                 break
         frame_filename = os.path.join(chunk_dir, f"frame_{frame_num:04d}.png")
+        print(f"saving {frame_filename} ...")
         cv2.imwrite(frame_filename, frame)
 
     # Check if you want to stop capturing. TODO: pause some other way

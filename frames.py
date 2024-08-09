@@ -57,6 +57,7 @@ def save_frames_from_video(camera_index=0, num_chunks=4, chunk_duration=5, outpu
 
     if get_user() == "pi":
         picam2.stop()
+        picam2.close()
         cv2.destroyAllWindows()
     
     else:

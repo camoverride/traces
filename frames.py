@@ -31,7 +31,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
     if USER == "pi":
         # Set up the camera
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888",
+        picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                                    "size": (width, height)}))
         picam2.start()
         fps = 30
@@ -119,7 +119,7 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
     # Start the camera if it's a pi camera
     if USER == "pi":
         picam2 = Picamera2()
-        picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888",
+        picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                                    "size": (width, height)}))
         picam2.start()
 

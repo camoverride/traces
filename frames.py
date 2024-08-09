@@ -43,14 +43,14 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
     else:
         cap = cv2.VideoCapture(0)
         fps = cap.get(cv2.CAP_PROP_FPS)
-    
+
     # How many frames to record?
     frame_count = int(duration * fps)
 
     # Create a memory-mapped array to store the frames
     memmap_shape = (frame_count, height, width, 3)
     memmap = np.memmap(memmap_filename, dtype='uint8', mode='w+', shape=memmap_shape)
-    
+
     for frame_num in range(frame_count):
 
         if USER == "pi":
@@ -69,7 +69,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
     if USER == "pi":
         picam2.stop()
         picam2.close()
-    
+
     else:
         cap.release()
         cv2.destroyAllWindows()
@@ -86,7 +86,7 @@ def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha)
     """
     Overlay frames from multiple memmaps and save the composite frames
     into an output memmap file.
-    
+
     Parameters:
     - memmap_filenames: List of memmap filenames containing frames for each chunk.
     - output_memmap_filename: Filename where the composite frames will be saved.
@@ -99,7 +99,7 @@ def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha)
     channels = 3
 
     memmaps = [np.memmap(filename, dtype='uint8', mode='r', shape=(frame_count, height, width, channels)) for filename in memmap_filenames]
-    
+
     # Create output memmap
     output_memmap = np.memmap(output_memmap_filename, dtype='uint8', mode='w+', shape=(frame_count, height, width, channels))
 
@@ -137,7 +137,7 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
         if not cap.isOpened():
             print("Error: Could not open webcam.")
             return False
-    
+
         # Capture a single frame from the webcam
         time.sleep(1) # pause required or first image will be murky and dark
         ret, frame = cap.read()
@@ -155,7 +155,7 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
     with mp_face_detection.FaceDetection(min_detection_confidence=confidence_threshold) as face_detection:
         # Process the frame and detect faces
         results = face_detection.process(frame_rgb)
-        
+
         # Check if any faces are detected
         if results.detections:
             return True
@@ -165,7 +165,7 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
 
 def stream_memmap_frames(memmap_filename):
     memmap = np.memmap(memmap_filename, dtype='uint8', mode='r')
-    
+
     # Print the shape of the memmap to debug
     print(f"Memmap shape: {memmap.shape}")
 
@@ -175,10 +175,10 @@ def stream_memmap_frames(memmap_filename):
         height = HEIGHT
         width = WIDTH
         channels = 3
-        
+
         # Calculate the frame count
         frame_count = total_elements // (height * width * channels)
-        
+
         # Reshape the memmap to the correct 4D shape
         memmap = memmap.reshape((frame_count, height, width, channels))
 
@@ -190,7 +190,7 @@ def stream_memmap_frames(memmap_filename):
 
         # Wait for user input
         key = cv2.waitKey(20)  # Adjust this to match the desired FPS
-        
+
         # Exit if 'q' is pressed
         if key == ord("q"):
             break
@@ -199,7 +199,7 @@ def stream_memmap_frames(memmap_filename):
 def copy_file(src, dst):
     """
     Copies a file from the source path to the destination path.
-    
+
     Parameters:
     - src: The source file path.
     - dst: The destination file path.
@@ -227,6 +227,6 @@ if __name__ == "__main__":
     WIDTH, HEIGHT = 1080, 1920
     print("Saving first memmap")
     save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="current_frames.dat")
-    
+
     print("saving second memmap")
     save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="_composites.dat")

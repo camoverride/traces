@@ -38,7 +38,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
         picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                                    "size": (width, height)}))
         picam2.start()
-        fps = 30
+        fps = 15
 
     # Start the camera if it's on a MacBook
     else:
@@ -55,6 +55,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
     for frame_num in range(frame_count):
 
         if USER == "pi":
+            time.sleep(0.04)
             frame = picam2.capture_array()
         else:
             time.sleep(0.1) # So first images aren't black/

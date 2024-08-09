@@ -203,12 +203,16 @@ def face_detected_mp(confidence_threshold=0.5):
             return False
 
 
+# Set to fullscreen TODO: is this inherited?
+cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
 def stream_images(data_dir="overlay_dir"):
     file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
 
     for file in sorted(file_paths):
         frame = cv2.imread(file)
-        cv2.imshow("f",frame)
+        cv2.imshow("window",frame)
 
         # Wait for user input
         key = cv2.waitKey(20) # TODO: calculate fps

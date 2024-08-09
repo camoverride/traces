@@ -22,7 +22,7 @@ if USER == "pi":
     from picamera2 import Picamera2
 
 
-def save_frames_from_video(duration, output_dir, output_base_dir):
+def save_frames_from_video(duration, output_dir):
     """
     Saves `duration` (seconds) of frames to a sub-directory inside the `output_dir`.
     The sub-directory of frames is named after the datetime.
@@ -41,13 +41,12 @@ def save_frames_from_video(duration, output_dir, output_base_dir):
         fps = cap.get(cv2.CAP_PROP_FPS)
     
     # How many frames to record?
-    chunk_frame_count = int(duration * fps)
+    frame_count = int(duration * fps)
 
     # Create directory for the chunk
-    chunk_dir = f"{output_base_dir}/{output_dir}"
-    os.makedirs(chunk_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     
-    for frame_num in range(chunk_frame_count):
+    for frame_num in range(frame_count):
 
         if USER == "pi":
             frame = picam2.capture_array()
@@ -55,7 +54,7 @@ def save_frames_from_video(duration, output_dir, output_base_dir):
             ret, frame = cap.read()
             if not ret:
                 break
-        frame_filename = os.path.join(chunk_dir, f"frame_{frame_num:04d}.png")
+        frame_filename = os.path.join(output_dir, f"frame_{frame_num:04d}.png")
         print(f"saving {frame_filename} ...")
         cv2.imwrite(frame_filename, frame)
 
@@ -212,7 +211,7 @@ def face_detected_mp(confidence_threshold=0.5):
             return False
 
 
-def stream_images(data_dir="overlay_dir"):
+def stream_images(data_dir):
     file_paths = [os.path.join(data_dir, f) for f in os.listdir(data_dir)]
 
     for file in sorted(file_paths):

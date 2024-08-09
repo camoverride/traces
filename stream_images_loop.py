@@ -1,12 +1,15 @@
-import time
 import os
 import shutil
-from frames import stream_images
+import time
 import cv2
+from frames import stream_images
 
 
 
 def copy_folder(src, dst):
+    """
+    Copies a folder from a `src` to a `dst`.
+    """
     try:
         # Check if the source folder exists
         if not os.path.exists(src):
@@ -16,7 +19,7 @@ def copy_folder(src, dst):
         # If the destination folder exists, remove it
         if os.path.exists(dst):
             shutil.rmtree(dst)
-        
+
         # Copy the source folder to the destination
         shutil.copytree(src, dst)
     except Exception as e:
@@ -25,29 +28,29 @@ def copy_folder(src, dst):
 
 
 if __name__ == "__main__":
-    capture_datetime = None
+    last_frame_capture_time = None
 
-    # Set to fullscreen TODO: is this inherited?
+    # Set to fullscreen.
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 
-
     while True:
-        # Get the date of the previous recordings
-        with open("recording_time.txt", "r") as f:
-            current_capture_datetime = str(f.read())
+        # Get the current capture time of the images.
+        current_frame_capture_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                                                   time.localtime(os.path.getmtime("frames/frame_0000.png")))
 
         # If there is new data, first copy it to the play folder so it can't be overwritten by the image wrting function
-        if current_capture_datetime != capture_datetime:
-            print(f"New imagesd detected. Copying them to the play_dir and streaming them...")
-            copy_folder(src="overlay_dir", dst="play_dir")
-            capture_datetime = current_capture_datetime
+        if current_frame_capture_time != last_frame_capture_time:
+            print("New images detected...")
+
+            copy_folder(src="composites", dst="play_dir")
+
+            last_frame_capture_time = current_frame_capture_time
+
+        # If the data is unchanged, still stream.
+        else:
+            print("No new images detected...")
 
         # Stream images from ths folder!
         stream_images(data_dir="play_dir")
-
-
-        # # If the data is unchanged, wait 1 second and check again.
-        # else:
-        #     time.sleep(1)

@@ -18,7 +18,7 @@ def stream_new_images(memmap_file_path):
     # If there is new data, first copy it to the play folder
     # so it can't be overwritten by the image writing function
     if last_memmap_modification_time != current_memmap_modification_time:
-        print("New images detected...")
+        print("New images detected, copying files...")
 
         copy_file(src=memmap_file_path, dst="__play.dat")
 
@@ -29,6 +29,7 @@ def stream_new_images(memmap_file_path):
         print("No new images detected...")
 
     # Stream images from ths folder!
+    print("Streaming images")
     stream_memmap_frames(memmap_filename="__play.dat")
 
 

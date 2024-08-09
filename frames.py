@@ -230,3 +230,4 @@ if __name__ == "__main__":
 
     print("saving second memmap")
     save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="_composites.dat")
+    stream_memmap_frames(memmap_filename="_composites.dat")

@@ -27,6 +27,11 @@ def copy_folder(src, dst):
 if __name__ == "__main__":
     capture_datetime = None
 
+    # Set to fullscreen TODO: is this inherited?
+    cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+
 
     while True:
         # Get the date of the previous recordings

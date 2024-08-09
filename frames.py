@@ -48,7 +48,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
     frame_count = int(duration * fps)
 
     # Create a memory-mapped array to store the frames
-    memmap_shape = (frame_count, height, width, 3)
+    memmap_shape = (frame_count, height, width, 3)  # Correctly shaping the memmap array
     memmap = np.memmap(memmap_filename, dtype='uint8', mode='w+', shape=memmap_shape)
 
     for frame_num in range(frame_count):
@@ -61,7 +61,7 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
             if not ret:
                 break
 
-        memmap[frame_num] = frame
+        memmap[frame_num] = frame  # Store the frame in the correct index
 
     # Finalize the memmap file
     memmap.flush()
@@ -217,17 +217,16 @@ def copy_file(src, dst):
 
 
 if __name__ == "__main__":
-    # # Example usage
-    # save_frames_to_memmap(10, 640, 480, 'frames_chunk1.dat')
-    # save_frames_to_memmap(10, 640, 480, 'frames_chunk2.dat')
 
-    # overlay_frames_from_memmaps(['1.dat', '2.dat'], '2.dat')
-
-    # stream_memmap_frames("composites.dat")
-    WIDTH, HEIGHT = 1080, 1920
     print("Saving first memmap")
     save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="current_frames.dat")
 
-    print("saving second memmap")
+    print("Saving second memmap")
     save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="_composites.dat")
-    stream_memmap_frames(memmap_filename="_composites.dat")
+    
+    print("Overlaying")
+    overlay_frames_from_memmaps(memmap_filenames=["current_frames.dat", "_composites.dat"],
+                                output_memmap_filename="composites.dat", alpha=0.5)
+    
+    print("Streaming the result")
+    stream_memmap_frames(memmap_filename="composites.dat")

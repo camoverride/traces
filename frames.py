@@ -164,36 +164,27 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
 
 
 def stream_memmap_frames(memmap_filename):
-    memmap = np.memmap(memmap_filename, dtype='uint8', mode='r')
+    # The shape is set to match (frame_count, height, width, channels)
+    frame_count = 150  # Or whatever the correct number of frames is
+    height = HEIGHT
+    width = WIDTH
+    channels = 3
 
-    # Print the shape of the memmap to debug
-    print(f"Memmap shape: {memmap.shape}")
-
-    if memmap.ndim == 1:
-        # If the shape is 1D, calculate the correct shape
-        total_elements = memmap.size
-        height = HEIGHT
-        width = WIDTH
-        channels = 3
-
-        # Calculate the frame count
-        frame_count = total_elements // (height * width * channels)
-
-        # Reshape the memmap to the correct 4D shape
-        memmap = memmap.reshape((frame_count, height, width, channels))
-
-    frame_count, height, width, channels = memmap.shape
+    # Create the memmap with the correct shape
+    memmap = np.memmap(memmap_filename, dtype='uint8', mode='r', shape=(frame_count, height, width, channels))
 
     for frame_num in range(frame_count):
         frame = memmap[frame_num]
         cv2.imshow("window", frame)
 
         # Wait for user input
-        key = cv2.waitKey(20)  # Adjust this to match the desired FPS
+        key = cv2.waitKey(40)  # Adjust this to match the desired FPS
 
         # Exit if 'q' is pressed
         if key == ord("q"):
             break
+
+    cv2.destroyAllWindows()
 
 
 def copy_file(src, dst):

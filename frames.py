@@ -184,8 +184,6 @@ def stream_memmap_frames(memmap_filename):
         if key == ord("q"):
             break
 
-    cv2.destroyAllWindows()
-
 
 def copy_file(src, dst):
     """

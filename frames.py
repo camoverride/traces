@@ -72,14 +72,14 @@ def save_frames_to_memmap(duration, width, height, memmap_filename):
         cv2.destroyAllWindows()
 
 
-def alpha_blend_images(image1, image2, alpha=0.5):
+def alpha_blend_images(image1, image2, alpha):
     """
     Blend two images with a given alpha value.
     """
     return cv2.addWeighted(image1, alpha, image2, 1 - alpha, 0)
 
 
-def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha=0.5):
+def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha):
     """
     Overlay frames from multiple memmaps and save the composite frames
     into an output memmap file.
@@ -220,4 +220,10 @@ if __name__ == "__main__":
 
     # overlay_frames_from_memmaps(['1.dat', '2.dat'], '2.dat')
 
-    stream_memmap_frames('2.dat')
+    # stream_memmap_frames("composites.dat")
+    WIDTH, HEIGHT = 1080, 1920
+    print("Saving first memmap")
+    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="current_frames.dat")
+    
+    print("saving second memmap")
+    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="_composites.dat")

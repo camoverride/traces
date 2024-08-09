@@ -10,3 +10,5 @@ overlay_dir
 play_dir
 recording_time.txt
 frames
+*.dat
+*.conf

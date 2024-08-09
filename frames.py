@@ -167,7 +167,7 @@ def face_detected_mp(width, height, confidence_threshold=0.5):
 
 def stream_memmap_frames(memmap_filename):
     # The shape is set to match (frame_count, height, width, channels)
-    frame_count = 150  # Or whatever the correct number of frames is
+    frame_count = 15*5  # Or whatever the correct number of frames is
     height = HEIGHT
     width = WIDTH
     channels = 3

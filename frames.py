@@ -167,7 +167,7 @@ def face_detected_mp(confidence_threshold=0.5):
         picam2.start()
 
         frame = picam2.capture_array()
-        picam2.stop()
+        # picam2.stop()
 
     # Start the camera if it's on a macbook
     else:

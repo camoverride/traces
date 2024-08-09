@@ -24,6 +24,7 @@ def overlay_faces(duration,
     `confidence_threshold` for face detection and an `alpha` for blending the composites.
     """
     if face_detected_mp(width=width, height=height, confidence_threshold=confidence_threshold):
+        print("Face detected!")
         # Save the frames
         print(f"Saving frames to {new_images_memmap}")
         save_frames_to_memmap(duration=duration,
@@ -64,7 +65,7 @@ if __name__ == "__main__":
                       existing_composite_images_memmap=most_recent_composite,
                       new_composite_images_memmap=f"play_files/{current_time}.dat",
                       confidence_threshold=0.5,
-                      alpha=0.5)
+                      alpha=0.9)
         
         # Clean up old files from play dir
         if len(composites_paths) > 5:

@@ -64,7 +64,7 @@ if __name__ == "__main__":
                       new_images_memmap="_current_frames.dat",
                       existing_composite_images_memmap=most_recent_composite,
                       new_composite_images_memmap=f"play_files/{current_time}.dat",
-                      confidence_threshold=0.3,
+                      confidence_threshold=0.7,
                       alpha=0.5)
         
         # Clean up old files from play dir

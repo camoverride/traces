@@ -65,7 +65,7 @@ if __name__ == "__main__":
                       existing_composite_images_memmap=most_recent_composite,
                       new_composite_images_memmap=f"play_files/{current_time}.dat",
                       confidence_threshold=0.3,
-                      alpha=0.3)
+                      alpha=0.5)
         
         # Clean up old files from play dir
         if len(composites_paths) > 5:

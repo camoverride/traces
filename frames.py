@@ -118,7 +118,7 @@ def overlay_frames_from_memmaps(memmap_filenames, output_memmap_filename, alpha)
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
-def face_detected_mp(width, height, confidence_threshold=0.5):
+def face_detected_mp(width, height, confidence_threshold):
     # Get a picture
 
     # Start the camera if it's a pi camera
@@ -210,13 +210,13 @@ def copy_file(src, dst):
 if __name__ == "__main__":
 
     print("Saving first memmap")
-    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="current_frames.dat")
+    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="1.dat")
 
     print("Saving second memmap")
-    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="_composites.dat")
+    save_frames_to_memmap(duration=5, width=WIDTH, height=HEIGHT, memmap_filename="2.dat")
     
     print("Overlaying")
-    overlay_frames_from_memmaps(memmap_filenames=["current_frames.dat", "_composites.dat"],
+    overlay_frames_from_memmaps(memmap_filenames=["1.dat", "2.dat"],
                                 output_memmap_filename="composites.dat", alpha=0.5)
     
     print("Streaming the result")

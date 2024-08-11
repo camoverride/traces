@@ -84,13 +84,13 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
             del new_images_memmap, most_recent_composite_memmap, output_memmap
 
+            # Clean up old files from play dir if there are too many
+            if len(composites_paths) > 5:
+                for f in composites_paths[5:]:
+                    os.remove(f)
+
         else:
             print("No face detected!")
             time.sleep(1)
-
-        # Clean up old files from play dir if there are too many
-        if len(composites_paths) > 5:
-            for f in composites_paths[5:]:
-                os.remove(f)
 
         print("--------------------------------------------")

@@ -71,31 +71,16 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             # Get the time for filenaming
             current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-            # Overlay the images with chunk processing
+            # Overlay the images frame by frame
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
             print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
-            # Define chunk size
-            chunk_size = 100  # Adjust this based on your Raspberry Pi's memory capacity
-            num_chunks = memmap_shape[0] // chunk_size
-
-            for i in range(num_chunks):
-                start_idx = i * chunk_size
-                end_idx = start_idx + chunk_size
-                output_memmap[start_idx:end_idx] = (
-                    ALPHA * new_images_memmap[start_idx:end_idx]
-                    + (1 - ALPHA) * most_recent_composite_memmap[start_idx:end_idx]
-                )
-
-            # Handle any remaining frames
-            if memmap_shape[0] % chunk_size != 0:
-                start_idx = num_chunks * chunk_size
-                output_memmap[start_idx:] = (
-                    ALPHA * new_images_memmap[start_idx:]
-                    + (1 - ALPHA) * most_recent_composite_memmap[start_idx:]
-                )
+            for frame_num in range(frame_count):
+                output_memmap[frame_num] = (
+                    ALPHA * new_images_memmap[frame_num] +
+                    (1 - ALPHA) * most_recent_composite_memmap[frame_num])
 
             output_memmap.flush()
 

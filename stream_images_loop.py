@@ -48,9 +48,6 @@ while True:
     for frame_num in range(frame_count):
         frame = memmap[frame_num]
 
-        # Debugging: Check min and max values of the frame
-        print(f"Frame {frame_num}: min={frame.min()}, max={frame.max()}, dtype={frame.dtype}")
-
         cv2.imshow("window", frame)
 
         # Wait for user input

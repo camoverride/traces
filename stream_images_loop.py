@@ -38,7 +38,6 @@ while True:
     file_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)])))
 
     # Instead of playing the newest file, play the second newest.
-    # This is because if the newest file is being written to, there might be an error.
     play_file_path = file_paths[1]
 
     print(f"Streaming {play_file_path}")
@@ -46,8 +45,15 @@ while True:
     # Create the memmap with the correct shape
     memmap = np.memmap(play_file_path, dtype='uint8', mode='r', shape=(frame_count, HEIGHT, WIDTH, 3))
 
+    # Debugging: Check the shape and dtype of the memmap
+    print(f"Memmap shape: {memmap.shape}, dtype: {memmap.dtype}")
+
     for frame_num in range(frame_count):
         frame = memmap[frame_num]
+
+        # Debugging: Check min and max values of the frame
+        print(f"Frame {frame_num}: min={frame.min()}, max={frame.max()}, dtype={frame.dtype}")
+
         cv2.imshow("window", frame)
 
         # Wait for user input

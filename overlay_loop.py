@@ -60,7 +60,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_images_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
 
             for frame_num in range(frame_count):
-                time.sleep(0.04)
+                # time.sleep(0.04)
                 frame = picam2.capture_array()
                 # Store the frame in the correct index
                 new_images_memmap[frame_num] = frame

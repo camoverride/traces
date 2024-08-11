@@ -45,9 +45,6 @@ while True:
     # Create the memmap with the correct shape
     memmap = np.memmap(play_file_path, dtype='uint8', mode='r', shape=(frame_count, HEIGHT, WIDTH, 3))
 
-    # Debugging: Check the shape and dtype of the memmap
-    print(f"Memmap shape: {memmap.shape}, dtype: {memmap.dtype}")
-
     for frame_num in range(frame_count):
         frame = memmap[frame_num]
 

@@ -41,6 +41,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Process the frame and detect faces
         results = face_detection.process(frame)
 
+        # Save the frame so we can debug it.
+        cv2.imwrite("__debug_frame.jpg", frame)
+
         # Check if any faces are detected
         if results.detections:
             print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")

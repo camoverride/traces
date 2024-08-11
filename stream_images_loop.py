@@ -2,8 +2,20 @@ import os
 import subprocess
 import cv2
 import numpy as np
-from overlay_loop import HEIGHT, WIDTH, CAPTURE_DURATION, FPS, PLAY_DIR
 
+
+
+# Read data from the config.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+WIDTH = config["WIDTH"]
+HEIGHT = config["HEIGHT"]
+PLAY_DIR = config["PLAY_DIR"]
+CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
+NEW_IMAGES_MEMMAP_PATH = config["NEW_IMAGES_MEMMAP_PATH"]
+ALPHA = config["ALPHA"]
+CAPTURE_DURATION = config["CAPTURE_DURATION"]
+FPS = config["FPS"]
 
 
 # Configure the screen properly
@@ -29,7 +41,6 @@ while True:
     play_file_path = file_paths[1]
 
     print(f"Streaming {play_file_path}")
-
 
     # Create the memmap with the correct shape
     memmap = np.memmap(play_file_path, dtype='uint8', mode='r', shape=(frame_count, HEIGHT, WIDTH, 3))

@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import time
+import yaml
 
 import cv2
 import mediapipe as mp
@@ -9,15 +10,10 @@ from picamera2 import Picamera2
 
 
 
-WIDTH, HEIGHT = 1080, 1920
-# WIDTH, HEIGHT = 1280, 720
-PLAY_DIR = "play_files"
-CONFIDENCE_THRESHOLD = 0.7
-NEW_IMAGES_MEMMAP_PATH = "_current_frames.dat"
-DURATION = 5
-ALPHA=0.5
-CAPTURE_DURATION=5 # seconds
-FPS = 15
+# Read data from the config.
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+WIDTH = config["WIDTH"]
 
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
@@ -40,6 +36,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         # Save the frame so we can debug it.
         cv2.imwrite("__debug_frame.jpg", frame)
+
+        # Get the time for filenaming
+        current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
         # Check if any faces are detected
         if results.detections:
@@ -68,9 +67,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path,
                                                      dtype='uint8', mode='r', shape=memmap_shape)
 
-            # Get the time for filenaming
-            current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-
             # Overlay the images frame by frame
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
             print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
@@ -92,7 +88,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                     os.remove(f)
 
         else:
-            print("No face detected!")
+            print(f"No face detected: {current_time}")
             time.sleep(1)
 
         print("--------------------------------------------")

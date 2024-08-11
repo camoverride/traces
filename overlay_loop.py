@@ -14,6 +14,14 @@ from picamera2 import Picamera2
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 WIDTH = config["WIDTH"]
+HEIGHT = config["HEIGHT"]
+PLAY_DIR = config["PLAY_DIR"]
+CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
+NEW_IMAGES_MEMMAP_PATH = config["NEW_IMAGES_MEMMAP_PATH"]
+ALPHA = config["ALPHA"]
+CAPTURE_DURATION = config["CAPTURE_DURATION"]
+FPS = config["FPS"]
+
 
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection

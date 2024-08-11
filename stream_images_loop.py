@@ -2,7 +2,6 @@ import os
 import subprocess
 import cv2
 import numpy as np
-from frames import stream_memmap_frames
 from overlay_loop import HEIGHT, WIDTH, CAPTURE_DURATION, FPS, PLAY_DIR
 
 
@@ -17,6 +16,9 @@ for command in commands:
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
+# Get the frame count
+frame_count = CAPTURE_DURATION * FPS
+
 
 while True:
     # Get the paths to all the files in the play_dir, sorted from newest to oldest.
@@ -27,16 +29,10 @@ while True:
     play_file_path = file_paths[1]
 
     print(f"Streaming {play_file_path}")
-    stream_memmap_frames(memmap_filename=play_file_path)
 
-    # The shape is set to match (frame_count, height, width, channels)
-    frame_count = CAPTURE_DURATION * FPS
-    height = HEIGHT
-    width = WIDTH
-    channels = 3
 
     # Create the memmap with the correct shape
-    memmap = np.memmap(play_file_path, dtype='uint8', mode='r', shape=(frame_count, height, width, channels))
+    memmap = np.memmap(play_file_path, dtype='uint8', mode='r', shape=(frame_count, HEIGHT, WIDTH, 3))
 
     for frame_num in range(frame_count):
         frame = memmap[frame_num]

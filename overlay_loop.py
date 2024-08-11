@@ -1,73 +1,96 @@
 from datetime import datetime
 import os
 import time
-from frames import face_detected_mp, save_frames_to_memmap, overlay_frames_from_memmaps, copy_file
+
+import cv2
+import mediapipe as mp
+import numpy as np
+from picamera2 import Picamera2
 
 
 
 WIDTH, HEIGHT = 1080, 1920
 # WIDTH, HEIGHT = 1280, 720
+PLAY_DIR = "play_files"
+CONFIDENCE_THRESHOLD = 0.5
+NEW_IMAGES_MEMMAP_PATH = "_current_frames.dat"
+DURATION = 5
+ALPHA=0.5
+CAPTURE_DURATION=5 # seconds
+FPS = 15
+
+# Initialize MediaPipe Face Detection
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
+# Initialize the picamera
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
+                                                            "size": (WIDTH, HEIGHT)}))
+picam2.start()
 
 
-def overlay_faces(duration,
-                  width,
-                  height,
-                  new_images_memmap,
-                  existing_composite_images_memmap,
-                  new_composite_images_memmap,
-                  confidence_threshold,
-                  alpha):
-    """
-    Records `duration` seconds of video (`width` x `height`) and writes it to
-    `new_images`.dat, which is a np.memmap file. This memmap is then combined with
-    the existing `composite_images`.dat to form new composites. There is a
-    `confidence_threshold` for face detection and an `alpha` for blending the composites.
-    """
-    if face_detected_mp(width=width, height=height, confidence_threshold=confidence_threshold):
-        print("Face detected!")
-        # Save the frames
-        print(f"Saving frames to {new_images_memmap}")
-        save_frames_to_memmap(duration=duration,
-                              width=width,
-                              height=height,
-                              memmap_filename=new_images_memmap)
+while True:
+    # Snap a photo
+    frame = picam2.capture_array()
 
-        # Overlay the images
-        print(f"Combining frames from {new_images_memmap} and {existing_composite_images_memmap} to create {new_composite_images_memmap}")
-        overlay_frames_from_memmaps(memmap_filenames=[new_images_memmap, existing_composite_images_memmap],
-                                    output_memmap_filename=new_composite_images_memmap,
-                                    alpha=alpha)
+    # Convert the image from BGR to RGB
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    else:
-        print("No face detected!")
-        time.sleep(5)
+    with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
+        # Process the frame and detect faces
+        results = face_detection.process(frame_rgb)
+
+        # Check if any faces are detected
+        if results.detections:
+            print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
+
+            # How many frames to record?
+            frame_count = int(CAPTURE_DURATION * FPS)
+
+            # Create a memory-mapped array to store the frames
+            memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
+            new_images_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
+
+            for frame_num in range(frame_count):
+                time.sleep(0.04)
+                frame = picam2.capture_array()
+                # Store the frame in the correct index
+                new_images_memmap[frame_num] = frame
+
+            # Finalize the memmap file
+            new_images_memmap.flush()
+
+            # Get the most recent composite to add to the incoming frames to create the next composite.
+            composites_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f)
+                                                    for f in os.listdir(PLAY_DIR)])))
+            most_recent_memmap_composite_path = composites_paths[0]
+            most_recent_memmap_composite = (most_recent_memmap_composite_path,
+                                            dtype='uint8', mode='w+', shape=memmap_shape)
+
+            # Get the time for filenaming
+            current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+            # Overlay the images
+            output_memmap_path = f"play_files/{current_time}.dat"
+            print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
+
+            # Create output memmap
+            output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
+
+            output_memmap[:] = ALPHA * new_images_memmap[:] + (1 - ALPHA) * most_recent_memmap_composite[:]
+
+            output_memmap.flush()
+
+
+
+        else:
+            print("No face detected!")
+            time.sleep(1)
+
+    # Clean up old files from play dir if there are too many
+    if len(composites_paths) > 5:
+        for f in composites_paths[5:]:
+            os.remove(f)
 
     print("--------------------------------------------")
-
-
-
-if __name__ == "__main__":
-    play_dir = "play_files"
-
-
-    while True:
-        # Get the time for filenaming
-        current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-
-        # Get the most recent composite to add to the incoming frames to create the next composite.
-        composites_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
-        most_recent_composite = composites_paths[0]
-
-        overlay_faces(duration=5,
-                      width=WIDTH,
-                      height=HEIGHT,
-                      new_images_memmap="_current_frames.dat",
-                      existing_composite_images_memmap=most_recent_composite,
-                      new_composite_images_memmap=f"play_files/{current_time}.dat",
-                      confidence_threshold=0.7,
-                      alpha=0.5)
-        
-        # Clean up old files from play dir
-        if len(composites_paths) > 5:
-            for f in composites_paths[5:]:
-                os.remove(f)

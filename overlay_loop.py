@@ -29,17 +29,17 @@ picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                             "size": (WIDTH, HEIGHT)}))
 picam2.start()
 
+with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
 
-while True:
-    # Snap a photo
-    frame = picam2.capture_array()
+    while True:
+        # Snap a photo
+        frame = picam2.capture_array()
 
-    # Convert the image from BGR to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Convert the image from BGR to RGB
+        # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
         # Process the frame and detect faces
-        results = face_detection.process(frame_rgb)
+        results = face_detection.process(frame)
 
         # Check if any faces are detected
         if results.detections:
@@ -65,32 +65,32 @@ while True:
             composites_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f)
                                                     for f in os.listdir(PLAY_DIR)])))
             most_recent_memmap_composite_path = composites_paths[0]
-            most_recent_memmap_composite = (most_recent_memmap_composite_path,
+            most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path,
                                             dtype='uint8', mode='w+', shape=memmap_shape)
 
             # Get the time for filenaming
             current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
             # Overlay the images
-            output_memmap_path = f"play_files/{current_time}.dat"
+            output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
             print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
 
             # Create output memmap
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
-            output_memmap[:] = ALPHA * new_images_memmap[:] + (1 - ALPHA) * most_recent_memmap_composite[:]
+            output_memmap[:] = ALPHA * new_images_memmap[:] + (1 - ALPHA) * most_recent_composite_memmap[:]
 
             output_memmap.flush()
 
-
+            del new_images_memmap, most_recent_composite_memmap, output_memmap
 
         else:
             print("No face detected!")
             time.sleep(1)
 
-    # Clean up old files from play dir if there are too many
-    if len(composites_paths) > 5:
-        for f in composites_paths[5:]:
-            os.remove(f)
+        # Clean up old files from play dir if there are too many
+        if len(composites_paths) > 5:
+            for f in composites_paths[5:]:
+                os.remove(f)
 
-    print("--------------------------------------------")
+        print("--------------------------------------------")

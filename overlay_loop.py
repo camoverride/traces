@@ -12,7 +12,7 @@ from picamera2 import Picamera2
 WIDTH, HEIGHT = 1080, 1920
 # WIDTH, HEIGHT = 1280, 720
 PLAY_DIR = "play_files"
-CONFIDENCE_THRESHOLD = 0.5
+CONFIDENCE_THRESHOLD = 0.3
 NEW_IMAGES_MEMMAP_PATH = "_current_frames.dat"
 DURATION = 5
 ALPHA=0.5

@@ -66,7 +66,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                                                     for f in os.listdir(PLAY_DIR)])))
             most_recent_memmap_composite_path = composites_paths[0]
             most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path,
-                                            dtype='uint8', mode='w+', shape=memmap_shape)
+                                                     dtype='uint8', mode='r', shape=memmap_shape)
 
             # Get the time for filenaming
             current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

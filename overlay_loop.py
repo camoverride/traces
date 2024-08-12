@@ -63,6 +63,10 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         # Process the frame and detect faces
         results_1 = face_detection.process(frame_1)
+        if results_1.detections:
+            print("Face detected in image 1")
+        if results_2.detections:
+            print("Face detected in image 2")
         results_2 = face_detection.process(frame_2)
 
         # Get the time for filenaming

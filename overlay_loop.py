@@ -77,7 +77,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                 mp_drawing.draw_detection(debug_frame, detection)
 
             # Save the debug frame with bounding boxes
-            cv2.imwrite("__debug_frame.jpg", debug_frame)
+            cv2.imwrite(f"debug_frames/_debug_frame_{current_time}.jpg", debug_frame)
 
             # How many frames to record?
             frame_count = int(CAPTURE_DURATION * FPS)

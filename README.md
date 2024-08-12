@@ -17,6 +17,10 @@ If there's an issue with jpeg:
 - `pip uninstall simplejpeg`
 - `pip install --no-cache-dir simplejpeg`
 
+Make folders:
+- `mkdir debug_frames`
+- `mkdir play_files`
+
 
 ## Test
 

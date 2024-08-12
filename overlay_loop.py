@@ -33,6 +33,24 @@ picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                             "size": (WIDTH, HEIGHT)}))
 picam2.start()
 
+# When the program starts, save two new videos to the play folder.
+frame_count = int(CAPTURE_DURATION * FPS)
+
+for _ in range(2):
+    current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    start_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
+    memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
+    start_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
+
+    for frame_num in range(frame_count):
+        frame = picam2.capture_array()
+        start_memmap[frame_num] = frame
+
+    # Finalize the memmap file
+    start_memmap.flush()
+
+
+# Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
 
     while True:
@@ -60,7 +78,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_images_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
 
             for frame_num in range(frame_count):
-                # time.sleep(0.04)
                 frame = picam2.capture_array()
                 # Store the frame in the correct index
                 new_images_memmap[frame_num] = frame

@@ -1,12 +1,11 @@
 # Ghosts
 
-Ghostly videos of people in a "mirror" (HDMI monitor inside picture frame. RPi 4B with PiCamera)
+Ghostly videos of people in a "mirror"
+
+Displayed on an HDMI monitor inside picture frame. RPi 4B with PiCamera.
+
 
 ## Setup
-
-Monitor:
-- `WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90`
-- `export DISPLAY=:0`
 
 Python requirements:
 - `python -m venv --system-site-packages .venv` (system-site-packages so we get the `picamera` package.)
@@ -19,12 +18,24 @@ If there's an issue with jpeg:
 - `pip install --no-cache-dir simplejpeg`
 
 
-## Play
+## Test
 
-You need at least two data files to begin, scp them over or generate them from `frames.py`:
-- `_composites.dat` and `composites.dat`
+Monitor:
+- `WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90`
+- `export DISPLAY=:0`
 
+Python files:
 - `python overlay_loop.py`
 - `python stream_images_loop.py`
 
-currently takes about 40 seconds to save 5 sec video to memmap and 30 secs to create composites from two 5s memmaps
+
+## Play
+
+- set up system service
+
+
+
+## To do
+
+- figure out camera dimensions
+- figure out why mediapipe isn't detecting faces unless they are quite close

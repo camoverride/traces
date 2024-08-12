@@ -22,10 +22,6 @@ FPS = config["FPS"]
 # Set the DISPLAY environment variable for the current process
 os.environ["DISPLAY"] = ":0"
 
-# Configure the screen properly
-subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
-                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
 # Set to fullscreen.
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -35,6 +31,11 @@ frame_count = CAPTURE_DURATION * FPS
 
 
 while True:
+    # Configure the screen properly
+    # TODO: this only needs to be run one time, but ideally a few seconds after screen turns on
+    subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
+                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
     # Get the paths to all the files in the play_dir, sorted from newest to oldest.
     file_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)])))
 

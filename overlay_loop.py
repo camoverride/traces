@@ -36,13 +36,13 @@ picam2.start()
 # When the program starts, save two new videos to the play folder.
 frame_count = int(CAPTURE_DURATION * FPS)
 
-for _ in range(1, 3):
+for _ in range(2):
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     filename = f"{current_time}.dat"
     start_memmap_path = os.path.join(PLAY_DIR, filename)
     print(f"Creating start file {start_memmap_path}")
     memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
-    start_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
+    start_memmap = np.memmap(start_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
     for frame_num in range(frame_count):
         frame = picam2.capture_array()

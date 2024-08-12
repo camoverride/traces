@@ -19,11 +19,12 @@ CAPTURE_DURATION = config["CAPTURE_DURATION"]
 FPS = config["FPS"]
 
 
+# Set the DISPLAY environment variable for the current process
+os.environ["DISPLAY"] = ":0"
+
 # Configure the screen properly
-commands = ["WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
-            "export DISPLAY=:0"]
-for command in commands:
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
+                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 # Set to fullscreen.
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)

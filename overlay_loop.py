@@ -72,7 +72,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        cv2.imwrite(f"debug_frames/{current_time}.jpg", frame_1)
+        cv2.imwrite(f"__debug_frame_1.jpg", frame_1)
+        cv2.imwrite(f"__debug_frame_2.jpg", frame_2)
 
         # Check if any faces are detected
         if results_1.detections and results_2.detections:

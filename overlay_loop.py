@@ -62,15 +62,22 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Process the frame and detect faces
         results = face_detection.process(frame)
 
-        # Save the frame so we can debug it.
-        cv2.imwrite("__debug_frame.jpg", frame)
-
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
         # Check if any faces are detected
         if results.detections:
             print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
+
+            # Create a copy of the frame for debugging. TODO: eventually get rid of this.
+            debug_frame = frame.copy()
+
+            # Draw bounding boxes on the debug frame
+            for detection in results.detections:
+                mp_drawing.draw_detection(debug_frame, detection)
+
+            # Save the debug frame with bounding boxes
+            cv2.imwrite("__debug_frame.jpg", debug_frame)
 
             # How many frames to record?
             frame_count = int(CAPTURE_DURATION * FPS)

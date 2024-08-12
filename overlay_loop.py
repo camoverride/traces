@@ -68,27 +68,29 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_2 = face_detection.process(frame_2)
         if results_2.detections:
             print("Face detected in image 2")
-
+        
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+        cv2.imwrite(frame_1, f"debug_frames/{current_time}.jpg")
 
         # Check if any faces are detected
         if results_1.detections and results_2.detections:
             print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 
-            # Create a copy of the frame for debugging. TODO: eventually get rid of this.
-            debug_frame_1 = frame_1.copy()
-            debug_frame_2 = frame_2.copy()
+            # # Create a copy of the frame for debugging. TODO: eventually get rid of this.
+            # debug_frame_1 = frame_1.copy()
+            # debug_frame_2 = frame_2.copy()
 
-            # Draw bounding boxes on the debug frame
-            for detection in results_1.detections:
-                mp_drawing.draw_detection(debug_frame_1, detection)
-            for detection in results_2.detections:
-                mp_drawing.draw_detection(debug_frame_2, detection)
+            # # Draw bounding boxes on the debug frame
+            # for detection in results_1.detections:
+            #     mp_drawing.draw_detection(debug_frame_1, detection)
+            # for detection in results_2.detections:
+            #     mp_drawing.draw_detection(debug_frame_2, detection)
 
-            # Save the debug frames with bounding boxes
-            cv2.imwrite(f"debug_frames/_debug_frame_1_{current_time}.jpg", debug_frame_1)
-            cv2.imwrite(f"debug_frames/_debug_frame_2_{current_time}.jpg", debug_frame_2)
+            # # Save the debug frames with bounding boxes
+            # cv2.imwrite(f"debug_frames/_debug_frame_1_{current_time}.jpg", debug_frame_1)
+            # cv2.imwrite(f"debug_frames/_debug_frame_2_{current_time}.jpg", debug_frame_2)
 
             # How many frames to record?
             frame_count = int(CAPTURE_DURATION * FPS)

@@ -31,8 +31,37 @@ Python files:
 
 ## Play
 
-- set up system service
+**Overlay:**
 
+Start a service with *systemd*. This will start the program when the computer starts and revive it when it dies:
+
+- `mkdir -p ~/.config/systemd/user`
+
+- Paste the contents of `overlay.service` into `~/.config/systemd/user/overlay.service`
+
+Start the service using the commands below:
+
+- `systemctl --user daemon-reload`
+- `systemctl --user enable overlay.service`
+- `systemctl --user start overlay.service`
+
+Start it on boot: `sudo loginctl enable-linger pi`
+
+Get the logs: `journalctl --user -u overlay.service`
+
+**Stream:**
+
+- Paste the contents of `stream.service` into `~/.config/systemd/user/stream.service`
+
+Start the service using the commands below:
+
+- `systemctl --user daemon-reload`
+- `systemctl --user enable stream.service`
+- `systemctl --user start stream.service`
+
+Start it on boot: `sudo loginctl enable-linger pi`
+
+Get the logs: `journalctl --user -u stream.service`
 
 
 ## To do

@@ -21,10 +21,10 @@ os.environ["DISPLAY"] = ":0"
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-def get_latest_video_path(play_dir):
-    """Returns the path of the most recent video in the directory."""
+def get_second_latest_video_path(play_dir):
+    """Returns the path of the second most recent video in the directory."""
     file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
-    return file_paths[0] if file_paths else None
+    return file_paths[1] if len(file_paths) > 1 else None
 
 def play_video(video_path):
     """Play the video in a loop until a new video is available."""
@@ -42,7 +42,7 @@ def play_video(video_path):
 
         # Check if a new video is available every few frames
         if frame_counter % FPS == 0:  # Check every second
-            new_video_path = get_latest_video_path(PLAY_DIR)
+            new_video_path = get_second_latest_video_path(PLAY_DIR)
             if new_video_path != video_path:
                 print(f"New video detected: {new_video_path}")
                 cap.release()
@@ -63,7 +63,7 @@ def main():
                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     while True:
-        latest_video_path = get_latest_video_path(PLAY_DIR)
+        latest_video_path = get_second_latest_video_path(PLAY_DIR)
 
         # Check if a new video has been created
         if latest_video_path != last_video_path:

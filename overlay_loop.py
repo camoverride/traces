@@ -74,7 +74,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
         if results_1.detections and results_2.detections:
-            print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
+            t = datetime.now().strftime("%H-%M-%S")
+            print(f"{t} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 
             frame_count = int(CAPTURE_DURATION * FPS)
             memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
@@ -91,7 +92,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path, dtype='uint8', mode='r', shape=memmap_shape)
 
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
-            print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
+            t = datetime.now().strftime("%H-%M-%S")
+            print(f"{t} - Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 

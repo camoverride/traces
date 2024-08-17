@@ -118,6 +118,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_2 = face_detection.process(frame_1)
         detection_end_time = t.time()
 
+        print(results_1.detections)
+
         cv2.imwrite("__debug_frame.jpg", frame_1)
 
         if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):

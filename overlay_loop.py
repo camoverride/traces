@@ -101,7 +101,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Capture two frames for face detection (temporal filtering)
         frame_1 = picam2.capture_array()
         processed_frame_1 = process_image(frame_1)
-        t.sleep(0.3)
+        t.sleep(0.5)
         frame_2 = picam2.capture_array()
         processed_frame_2 = process_image(frame_2)
 

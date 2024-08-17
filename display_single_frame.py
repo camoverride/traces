@@ -36,8 +36,8 @@ def load_memmap_frame(file_path, height, width, channels, frame_idx):
 file_path = "_current_frames.dat"
 
 # Known dimensions (height, width, channels)
-height = 1080  # Update this based on your data
-width = 1920  # Update this based on your data
+height = 1920  # Update this based on your data
+width =  1080 # Update this based on your data
 channels = 3  # Update this based on your data (3 for RGB, 1 for grayscale, etc.)
 
 # Index of the frame you want to display
@@ -49,6 +49,6 @@ frame = load_memmap_frame(file_path, height, width, channels, frame_idx)
 # Display the frame using OpenCV
 cv2.imshow("Frame", frame)
 
-# Wait until a key is pressed, then close the window
-cv2.waitKey(0)
+# Wait for 5000 ms (5 seconds) before closing the window
+cv2.waitKey(5000)
 cv2.destroyAllWindows()

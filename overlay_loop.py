@@ -52,25 +52,30 @@ def capture_frames(frame_count):
             print_memory_usage(f"After Capturing Frame {i + 1}")
     return np.array(frames)
 
-# Function to process and blend frames using the TPU in one batch
-def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames):
-    # Normalize and expand dimensions for the model
-    new_frames_normalized = new_frames.astype(np.float32) / 255.0
-    current_frames_normalized = current_frames.astype(np.float32) / 255.0
+# Function to process and blend frames one by one using the TPU
+def process_frames_individually(interpreter, input_details, output_details, new_frames, current_frames):
+    blended_frames = []
+    for i in range(new_frames.shape[0]):
+        # Normalize and expand dimensions for the model
+        new_frame_normalized = np.expand_dims(new_frames[i].astype(np.float32) / 255.0, axis=0)
+        current_frame_normalized = np.expand_dims(current_frames[i].astype(np.float32) / 255.0, axis=0)
 
-    print(f"new_frames_normalized shape: {new_frames_normalized.shape}")
-    print(f"current_frames_normalized shape: {current_frames_normalized.shape}")
+        # Set the tensors for processing
+        interpreter.set_tensor(input_details[0]['index'], new_frame_normalized)
+        interpreter.set_tensor(input_details[1]['index'], current_frame_normalized)
 
-    # Ensure the batch size is handled correctly by the model
-    interpreter.set_tensor(input_details[0]['index'], np.expand_dims(new_frames_normalized, axis=0))
-    interpreter.set_tensor(input_details[1]['index'], np.expand_dims(current_frames_normalized, axis=0))
+        # Run inference
+        interpreter.invoke()
 
-    # Run inference
-    interpreter.invoke()
+        # Get the blended output
+        blended_frame = interpreter.get_tensor(output_details[0]['index'])[0]
+        blended_frames.append((blended_frame * 255).astype(np.uint8))
 
-    # Get the blended output
-    blended_frames = interpreter.get_tensor(output_details[0]['index'])[0]
-    return (blended_frames * 255).astype(np.uint8)
+        if i % 10 == 0:
+            print(f"Processed frame {i + 1}/{new_frames.shape[0]}")
+            print_memory_usage(f"After Processing Frame {i + 1}")
+
+    return np.array(blended_frames)
 
 # Function to save output video
 def save_output_video(output_video_path, output_frames, fps):
@@ -121,8 +126,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_frames = capture_frames(frame_count)
 
             print_memory_usage("Before Blending New Frames")
-            # Blend all the frames in one batch
-            blended_frames = process_frames_batch(interpreter, input_details, output_details, new_frames, current_composite_frames)
+            # Blend all the frames one by one
+            blended_frames = process_frames_individually(interpreter, input_details, output_details, new_frames, current_composite_frames)
 
             # Update the current composite frames
             current_composite_frames = blended_frames

@@ -10,13 +10,15 @@ def create_alpha_blending_model(height, width, channels):
     model = tf.keras.Model(inputs=[input_1, input_2], outputs=blended_output)
     return model
 
-# Example usage
+# Create the model
 height, width, channels = 1920, 1080, 3
 model = create_alpha_blending_model(height, width, channels)
 model.summary()
 
-
+# Convert the model to TensorFlow Lite format
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.experimental_new_converter = True
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
 tflite_model = converter.convert()
 
 # Save the TFLite model

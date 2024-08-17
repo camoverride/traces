@@ -47,7 +47,7 @@ channels = 3   # RGB
 
 # Load two memmap .dat files with inferred frame count
 file_1_path = "_current_frames.dat"
-file_2_path = "_current_frames.dat"
+file_2_path = "current_frames.dat"
 
 memmap_1 = load_memmap_file(file_1_path, height, width, channels)
 memmap_2 = load_memmap_file(file_2_path, height, width, channels)

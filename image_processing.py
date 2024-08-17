@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-
-
 def adjust_gamma(image, gamma=1.0):
     invGamma = 1.0 / gamma
     table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
@@ -23,19 +21,14 @@ def preprocess_image(frame):
     # Convert to grayscale
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     
-    # Apply histogram equalization to enhance contrast
-    equalized_frame = cv2.equalizeHist(gray_frame)
+    # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to enhance local contrast
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    equalized_frame = clahe.apply(gray_frame)
     
     # Convert back to RGB format for MediaPipe compatibility
     processed_frame = cv2.cvtColor(equalized_frame, cv2.COLOR_GRAY2RGB)
     
     return processed_frame
-
-
-def downscale_image(frame, scale=0.5):
-    width = int(frame.shape[1] * scale)
-    height = int(frame.shape[0] * scale)
-    return cv2.resize(frame, (width, height))
 
 
 def process_image(frame):
@@ -44,18 +37,18 @@ def process_image(frame):
     :param frame: The input image frame.
     :return: The processed image frame.
     """
-    # Step 1: Downscale the image (if necessary)
-    downscaled_frame = downscale_image(frame, scale=0.5)
-    
-    # Step 2: Check the brightness and adapt
-    brightness = np.mean(cv2.cvtColor(downscaled_frame, cv2.COLOR_RGB2HSV)[:, :, 2])
+    # Step 1: Check and adjust brightness if necessary
+    brightness = np.mean(cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)[:, :, 2])
     
     if brightness < 100:  # Image is too dark, increase brightness
-        downscaled_frame = increase_brightness(downscaled_frame, value=40)
-    elif brightness > 180:  # Image is too bright, apply gamma correction
-        downscaled_frame = adjust_gamma(downscaled_frame, gamma=0.6)
+        frame = increase_brightness(frame, value=40)
+    elif brightness > 180:  # Image is too bright, apply slight gamma correction
+        frame = adjust_gamma(frame, gamma=0.8)
+    else:
+        # Apply a mild gamma correction to standardize appearance
+        frame = adjust_gamma(frame, gamma=0.9)
     
-    # Step 3: Preprocess image (grayscale conversion, histogram equalization, and RGB conversion)
-    processed_frame = preprocess_image(downscaled_frame)
+    # Step 2: Preprocess image (grayscale conversion, CLAHE, and RGB conversion)
+    processed_frame = preprocess_image(frame)
     
     return processed_frame

@@ -21,20 +21,17 @@ os.environ["DISPLAY"] = ":0"
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-def get_latest_video_path(play_dir):
-    """Returns the path of the most recent video in the directory."""
-    file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
-    return file_paths[0] if len(file_paths) > 0 else None
+# Function to hide the mouse cursor
+def hide_mouse(event, x, y, flags, param):
+    cv2.setMouseCallback("window", lambda *args : None)  # No-op callback to hide cursor
 
-def is_video_file_ready(video_path):
-    """Check if the video file is ready to be played."""
-    try:
-        cap = cv2.VideoCapture(video_path)
-        ret, _ = cap.read()
-        cap.release()
-        return ret  # Returns True if the first frame is successfully read
-    except:
-        return False
+# Apply the function to hide the cursor
+cv2.setMouseCallback("window", hide_mouse)
+
+def get_second_latest_video_path(play_dir):
+    """Returns the path of the second most recent video in the directory."""
+    file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
+    return file_paths[1] if len(file_paths) > 1 else None
 
 def play_video(video_path):
     """Play the video in a loop until a new video is available."""
@@ -52,8 +49,8 @@ def play_video(video_path):
 
         # Check if a new video is available every few frames
         if frame_counter % FPS == 0:  # Check every second
-            new_video_path = get_latest_video_path(PLAY_DIR)
-            if new_video_path != video_path and is_video_file_ready(new_video_path):
+            new_video_path = get_second_latest_video_path(PLAY_DIR)
+            if new_video_path != video_path:
                 print(f"New video detected: {new_video_path}")
                 cap.release()
                 return new_video_path
@@ -73,10 +70,10 @@ def main():
                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     while True:
-        latest_video_path = get_latest_video_path(PLAY_DIR)
+        latest_video_path = get_second_latest_video_path(PLAY_DIR)
 
-        # Check if a new video has been created and if it's ready to play
-        if latest_video_path != last_video_path and is_video_file_ready(latest_video_path):
+        # Check if a new video has been created
+        if latest_video_path != last_video_path:
             last_video_path = latest_video_path
             print(f"Loading new video: {last_video_path}")
         

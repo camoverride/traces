@@ -93,7 +93,14 @@ with open("_completed_video.txt", "w") as f:
     f.write(initial_video_filename)
 
 
-# Begin the main loop
+def has_valid_detections(results, confidence_threshold):
+    if results.detections:
+        for detection in results.detections:
+            if detection.score and detection.score[0] >= confidence_threshold:
+                return True
+    return False
+
+
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
     while True:
         loop_start_time = t.time()
@@ -110,9 +117,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_1 = face_detection.process(processed_frame_1)
         results_2 = face_detection.process(processed_frame_2)
         detection_end_time = t.time()
-        
 
-        if results_1.detections and results_2.detections:
+        if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
             print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
             # Capture new frames

@@ -70,11 +70,19 @@ output_frame = run_inference(interpreter, input_1, input_2)
 
 # Display the original frames and the output frame
 cv2.imshow("Input Frame 1", frame_1)
+cv2.waitKey(1000)
+cv2.destroyAllWindows()
+
 cv2.imshow("Input Frame 2", frame_2)
+cv2.waitKey(1000)
+cv2.destroyAllWindows()
+
 cv2.imshow("Output Frame", output_frame)
+cv2.waitKey(3000)
+cv2.destroyAllWindows()
 
 # Wait until a key is pressed, then close all windows
-cv2.waitKey(5000)
+# cv2.waitKey(5000)
 cv2.destroyAllWindows()
 
 # Clean up

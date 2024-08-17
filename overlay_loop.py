@@ -152,8 +152,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             load_start_time = t.time()
             composites_paths = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], reverse=True)
             most_recent_memmap_composite_path = composites_paths[0]
-            most_recent_composite_memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
-            most_recent_composite_frames = preload_frames(most_recent_memmap_composite_path, most_recent_composite_memmap_shape)
+            most_recent_composite_frames = preload_frames(most_recent_memmap_composite_path, HEIGHT, WIDTH, 3)
             load_end_time = t.time()
             print(f"Time taken to load most recent composite: {load_end_time - load_start_time:.4f} seconds")
 

@@ -120,10 +120,10 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         if results_1:
             if results_1.detections:
-                print(results_1.detections["score"])
+                print(results_1.detections.score)
         if results_2:
             if results_2.detections:
-                print(results_2.detections["score"])
+                print(results_2.detections.score)
         print("#####################")
 
 

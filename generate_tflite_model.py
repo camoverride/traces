@@ -1,39 +1,26 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
 
-class OverlayLayer(Layer):
-    def __init__(self, alpha=0.5, **kwargs):
-        super(OverlayLayer, self).__init__(**kwargs)
-        self.alpha = alpha
-
-    def call(self, inputs):
-        input1, input2 = inputs
-        output = tf.add(tf.multiply(self.alpha, input1), tf.multiply(1 - self.alpha, input2))
-        return output
-
-def create_overlay_model(alpha=0.5):
-    input1 = tf.keras.layers.Input(shape=(None, None, 3), name="input_1")
-    input2 = tf.keras.layers.Input(shape=(None, None, 3), name="input_2")
+def alpha_blending_model(input_shape):
+    input_1 = tf.keras.Input(shape=input_shape)
+    input_2 = tf.keras.Input(shape=input_shape)
     
-    overlay_output = OverlayLayer(alpha=alpha)([input1, input2])
+    # Alpha blending operation
+    alpha = 0.5  # This is the alpha value used in your original code
+    output = alpha * input_1 + (1 - alpha) * input_2
     
-    model = tf.keras.models.Model(inputs=[input1, input2], outputs=overlay_output)
+    model = tf.keras.Model(inputs=[input_1, input_2], outputs=output)
     return model
 
+# Define the input shape (Height, Width, Channels)
+input_shape = (1920, 1080, 3)  # (Height, Width, Channels)
+
 # Create the model
-alpha = 0.5  # Replace with your ALPHA value
-overlay_model = create_overlay_model(alpha)
+model = alpha_blending_model(input_shape)
 
-# Save the model
-overlay_model.save("overlay_model.h5")
-
-# Convert the model to TensorFlow Lite
-converter = tf.lite.TFLiteConverter.from_keras_model(overlay_model)
-converter.optimizations = [tf.lite.Optimize.DEFAULT]
+# Save the model as a TensorFlow Lite model
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
 tflite_model = converter.convert()
 
-# Save the TFLite model
-with open("overlay_model.tflite", "wb") as f:
+# Save the converted model to a file
+with open("alpha_blending_model.tflite", "wb") as f:
     f.write(tflite_model)
-
-print("TFLite model saved as overlay_model.tflite")

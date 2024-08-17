@@ -17,9 +17,8 @@ def load_memmap_file(file_path, height, width, channels):
     return np.memmap(file_path, dtype='uint8', mode='r', shape=shape)
 
 # Function to preprocess the frame for the model
-def preprocess_frame(frame, target_width, target_height):
-    resized_frame = cv2.resize(frame, (target_width, target_height))
-    return np.expand_dims(resized_frame.astype(np.float32) / 255.0, axis=0)
+def preprocess_frame(frame):
+    return np.expand_dims(frame.astype(np.float32) / 255.0, axis=0)
 
 # Function to run inference and postprocess the result
 def run_inference(interpreter, input_1, input_2):
@@ -44,7 +43,7 @@ def run_inference(interpreter, input_1, input_2):
     return output_frame_uint8
 
 # Initialize the TFLite model
-interpreter = make_interpreter("overlay_model.tflite")
+interpreter = make_interpreter("alpha_blending_model.tflite")  # Update with your model's file name
 interpreter.allocate_tensors()
 
 # Known dimensions (height, width, channels)
@@ -59,9 +58,13 @@ file_2_path = "current_frames.dat"
 memmap_1 = load_memmap_file(file_1_path, height, width, channels)
 memmap_2 = load_memmap_file(file_2_path, height, width, channels)
 
-# Get expected input size for the model
+# Get expected input size for the model (in case input resizing is needed)
 input_details = interpreter.get_input_details()
 _, target_height, target_width, _ = input_details[0]['shape']
+
+# If the input size to the model does not require resizing, you can use:
+# target_height = height
+# target_width = width
 
 # Choose a frame index to inspect (ensure it is within range)
 frame_idx = min(50, len(memmap_1) - 1)  # Ensure frame_idx is within the valid range
@@ -69,8 +72,8 @@ frame_1 = memmap_1[frame_idx]
 frame_2 = memmap_2[frame_idx]
 
 # Preprocess the frames
-input_1 = preprocess_frame(frame_1, target_width, target_height)
-input_2 = preprocess_frame(frame_2, target_width, target_height)
+input_1 = preprocess_frame(frame_1)
+input_2 = preprocess_frame(frame_2)
 
 # Run inference
 output_frame = run_inference(interpreter, input_1, input_2)

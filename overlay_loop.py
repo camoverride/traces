@@ -10,6 +10,7 @@ import psutil
 from image_processing import process_image
 
 
+
 # Read data from the config
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
@@ -35,6 +36,7 @@ mp_drawing = mp.solutions.drawing_utils
 def print_memory_usage(label):
     """
     Print memory use for debugging.
+    NOTE: this code no longer has memory leak issues!
     """
     process = psutil.Process(os.getpid())
     mem_info = process.memory_info()
@@ -94,7 +96,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         print("Starting main loop")
         loop_start_time = t.time()
 
-        # Capture two frames for face detection
+        # Capture two frames for face detection (temporal filtering)
         frame_1 = picam2.capture_array()
         processed_frame_1 = process_image(frame_1)
         t.sleep(0.3)
@@ -108,7 +110,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         detection_end_time = t.time()
         print(f"  Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
-        if 1==1:#results_1.detections and results_2.detections:
+        if results_1.detections and results_2.detections:
             print("    Face detected! Capturing and blending new frames...")
 
             # Capture new frames
@@ -142,7 +144,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                     os.remove(f)
 
         else:
-            print(f"  No face detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             t.sleep(0.2)
 
         loop_end_time = t.time()

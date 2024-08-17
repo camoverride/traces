@@ -1,9 +1,9 @@
 import os
 import subprocess
-import time
 import yaml
 import cv2
-import numpy as np
+
+
 
 # Read data from the config
 with open("config.yaml", "r") as file:
@@ -28,13 +28,19 @@ def hide_mouse(event, x, y, flags, param):
 # Apply the function to hide the cursor
 cv2.setMouseCallback("window", hide_mouse)
 
+
 def get_second_latest_video_path(play_dir):
-    """Returns the path of the second most recent video in the directory."""
+    """
+    Returns the path of the second most recent video in the directory.
+    """
     file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
     return file_paths[1] if len(file_paths) > 1 else None
 
+
 def play_video(video_path):
-    """Play the video in a loop until a new video is available."""
+    """
+    Play the video in a loop until a new video is available.
+    """
     cap = cv2.VideoCapture(video_path)
     frame_counter = 0
     while True:
@@ -62,6 +68,7 @@ def play_video(video_path):
             cv2.destroyAllWindows()
             exit(0)  # Exit the entire program
 
+
 def main():
     last_video_path = None
 
@@ -79,6 +86,8 @@ def main():
         
         # Play the current video, checking for a new one
         last_video_path = play_video(last_video_path)
+
+
 
 if __name__ == "__main__":
     main()

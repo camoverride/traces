@@ -6,7 +6,6 @@ def adjust_gamma(image, gamma=1.0):
     table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
     return cv2.LUT(image, table)
 
-
 def increase_brightness(frame, value=30):
     hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     h, s, v = cv2.split(hsv)
@@ -16,20 +15,20 @@ def increase_brightness(frame, value=30):
     frame_bright = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2RGB)
     return frame_bright
 
-
-def preprocess_image(frame):
-    # Convert to grayscale
-    gray_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+def apply_clahe_to_rgb(frame):
+    lab = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
+    l, a, b = cv2.split(lab)
     
-    # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to enhance local contrast
+    # Apply CLAHE to the L-channel
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    equalized_frame = clahe.apply(gray_frame)
+    cl = clahe.apply(l)
     
-    # Convert back to RGB format for MediaPipe compatibility
-    processed_frame = cv2.cvtColor(equalized_frame, cv2.COLOR_GRAY2RGB)
+    # Merge the CLAHE-enhanced L-channel back with the A and B channels
+    limg = cv2.merge((cl, a, b))
     
-    return processed_frame
-
+    # Convert back to RGB
+    final_frame = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
+    return final_frame
 
 def process_image(frame):
     """
@@ -48,11 +47,7 @@ def process_image(frame):
         # Apply a mild gamma correction to standardize appearance
         frame = adjust_gamma(frame, gamma=0.9)
     
-    # Step 2: Preprocess image (grayscale conversion, CLAHE, and RGB conversion)
-    processed_frame = preprocess_image(frame)
-    
-    # Convert back to RGB if needed
-    if len(processed_frame.shape) == 2 or processed_frame.shape[2] == 1:
-        processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2RGB)
+    # Step 2: Apply CLAHE directly on the RGB channels
+    processed_frame = apply_clahe_to_rgb(frame)
     
     return processed_frame

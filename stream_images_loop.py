@@ -36,16 +36,25 @@ def get_completed_video_path():
     if os.path.exists(completed_video_file):
         with open(completed_video_file, "r") as file:
             video_filename = file.read().strip()
-            video_path = os.path.join(PLAY_DIR, video_filename)
-            if os.path.exists(video_path):
-                return video_path
+            if video_filename:  # Ensure the filename is not empty
+                video_path = os.path.join(PLAY_DIR, video_filename)
+                if os.path.exists(video_path):
+                    return video_path
     return None
 
 def play_video(video_path):
     """
     Play the video in a loop until a new video is available.
     """
+    if not video_path:
+        print("No valid video to play.")
+        return None
+
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        print(f"Failed to open video: {video_path}")
+        return None
+
     frame_counter = 0
     while True:
         ret, frame = cap.read()
@@ -60,7 +69,7 @@ def play_video(video_path):
         # Check if a new video is available every few frames
         if frame_counter % FPS == 0:  # Check every second
             new_video_path = get_completed_video_path()
-            if new_video_path != video_path:
+            if new_video_path and new_video_path != video_path:
                 print(f"New video detected: {new_video_path}")
                 cap.release()
                 return new_video_path
@@ -87,8 +96,12 @@ def main():
             last_video_path = latest_video_path
             print(f"Loading new video: {last_video_path}")
 
-        # Play the current video, checking for a new one
-        last_video_path = play_video(last_video_path)
+        if last_video_path:
+            # Play the current video, checking for a new one
+            last_video_path = play_video(last_video_path)
+        else:
+            print("Waiting for a valid video to be completed...")
+            time.sleep(0.2)  # Wait before checking again
 
 if __name__ == "__main__":
     main()

@@ -29,7 +29,7 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 # Load the TFLite model for blending
-interpreter = make_interpreter("alpha_blending_batch_model.tflite")
+interpreter = make_interpreter("alpha_blending_fixed_batch_model.tflite")
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
@@ -52,29 +52,26 @@ def capture_frames(frame_count):
             print_memory_usage(f"After Capturing Frame {i + 1}")
     return np.array(frames)
 
-# Function to process and blend all frames as one batch using the TPU
-def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames):
-    # Normalize the frames
-    new_frames_normalized = new_frames.astype(np.float32) / 255.0
-    current_frames_normalized = current_frames.astype(np.float32) / 255.0
+# Function to process and blend frames one by one using the TPU
+def process_frames_individually(interpreter, input_details, output_details, new_frames, current_frames):
+    blended_frames = []
+    for i in range(new_frames.shape[0]):
+        # Normalize and expand dimensions for the model
+        new_frame_normalized = np.expand_dims(np.expand_dims(new_frames[i].astype(np.float32) / 255.0, axis=0), axis=0)
+        current_frame_normalized = np.expand_dims(np.expand_dims(current_frames[i].astype(np.float32) / 255.0, axis=0), axis=0)
 
-    # Expand dimensions to match expected model input (1, num_frames, height, width, channels)
-    new_frames_normalized = np.expand_dims(new_frames_normalized, axis=0)  # Shape: (1, num_frames, height, width, channels)
-    current_frames_normalized = np.expand_dims(current_frames_normalized, axis=0)  # Shape: (1, num_frames, height, width, channels)
+        # Set the tensors for processing
+        interpreter.set_tensor(input_details[0]['index'], new_frame_normalized)
+        interpreter.set_tensor(input_details[1]['index'], current_frame_normalized)
 
-    print(f"new_frames_normalized shape: {new_frames_normalized.shape}")
-    print(f"current_frames_normalized shape: {current_frames_normalized.shape}")
+        # Run inference
+        interpreter.invoke()
 
-    # Set the tensors for processing
-    interpreter.set_tensor(input_details[0]['index'], new_frames_normalized)
-    interpreter.set_tensor(input_details[1]['index'], current_frames_normalized)
+        # Get the blended output
+        blended_frame = interpreter.get_tensor(output_details[0]['index'])[0][0]
+        blended_frames.append((blended_frame * 255).astype(np.uint8))
 
-    # Run inference
-    interpreter.invoke()
-
-    # Get the blended output
-    blended_frames = interpreter.get_tensor(output_details[0]['index'])[0]  # Shape: (num_frames, height, width, channels)
-    return (blended_frames * 255).astype(np.uint8)
+    return np.array(blended_frames)
 
 # Function to save output video
 def save_output_video(output_video_path, output_frames, fps):
@@ -125,8 +122,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_frames = capture_frames(frame_count)
 
             print_memory_usage("Before Blending New Frames")
-            # Blend all the frames in one batch
-            blended_frames = process_frames_batch(interpreter, input_details, output_details, new_frames, current_composite_frames)
+            # Blend all the frames one by one
+            blended_frames = process_frames_individually(interpreter, input_details, output_details, new_frames, current_composite_frames)
 
             # Update the current composite frames
             current_composite_frames = blended_frames

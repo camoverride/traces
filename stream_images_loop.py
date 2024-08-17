@@ -32,7 +32,7 @@ def get_completed_video_path():
     Reads the video filename from the _completed_video.txt file.
     Returns the full path of the video if the file exists, otherwise None.
     """
-    completed_video_file = os.path.join(PLAY_DIR, "_completed_video.txt")
+    completed_video_file = "_completed_video.txt"
     if os.path.exists(completed_video_file):
         with open(completed_video_file, "r") as file:
             video_filename = file.read().strip()

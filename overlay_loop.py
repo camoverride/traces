@@ -136,6 +136,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             print(f"Time for saving video: {video_save_end_time - video_save_start_time:.4f}")
             print(f"Updated video saved as {new_video_filename}")
 
+            with open("_completed_video.txt", "w") as f:
+                f.write(new_video_filename)
+
             # Clean up old videos, keeping only the most recent two
             video_files = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], key=os.path.getmtime)
             if len(video_files) > 2:

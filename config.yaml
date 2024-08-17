@@ -4,5 +4,5 @@ PLAY_DIR: play_files
 CONFIDENCE_THRESHOLD: 0.7
 NEW_IMAGES_MEMMAP_PATH: _current_frames.dat
 ALPHA: 0.5
-CAPTURE_DURATION: 5 # seconds
+CAPTURE_DURATION: 2 # seconds
 FPS: 15

@@ -32,6 +32,13 @@ def run_inference(interpreter, input_1, input_2):
     interpreter.invoke()
 
     output_frame = interpreter.get_tensor(output_details[0]['index'])
+
+    # Debug: Print the output frame's shape and min/max values
+    print(f"Output Frame Shape: {output_frame.shape}")
+    print(f"Output Frame Data Type: {output_frame.dtype}")
+    print(f"Output Frame Min Value: {output_frame.min()}")
+    print(f"Output Frame Max Value: {output_frame.max()}")
+
     output_frame_uint8 = (output_frame[0] * 255).astype(np.uint8)
 
     return output_frame_uint8
@@ -42,7 +49,7 @@ interpreter.allocate_tensors()
 
 # Known dimensions (height, width, channels)
 height = 1920  # Update this based on your data
-width = 1080    # Update this based on your data
+width = 1080   # Update this based on your data
 channels = 3   # RGB
 
 # Load two memmap .dat files with inferred frame count
@@ -79,10 +86,6 @@ cv2.destroyAllWindows()
 
 cv2.imshow("Output Frame", output_frame)
 cv2.waitKey(3000)
-cv2.destroyAllWindows()
-
-# Wait until a key is pressed, then close all windows
-# cv2.waitKey(5000)
 cv2.destroyAllWindows()
 
 # Clean up

@@ -27,15 +27,29 @@ def get_latest_video_path(play_dir):
     return file_paths[0] if file_paths else None
 
 def play_video(video_path):
-    """Play the video in a loop."""
+    """Play the video in a loop until a new video is available."""
     cap = cv2.VideoCapture(video_path)
+    frame_counter = 0
     while True:
         ret, frame = cap.read()
+
         if not ret:
             cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video if it ends
             continue
+
         cv2.imshow("window", frame)
-        key = cv2.waitKey(int(1000 / FPS))  # Wait for key press or continue playback
+        key = cv2.waitKey(int(1000 / FPS))  # Adjust this to match the desired FPS
+
+        # Check if a new video is available every few frames
+        if frame_counter % FPS == 0:  # Check every second
+            new_video_path = get_latest_video_path(PLAY_DIR)
+            if new_video_path != video_path:
+                print(f"New video detected: {new_video_path}")
+                cap.release()
+                return new_video_path
+
+        frame_counter += 1
+
         if key == ord("q"):
             cap.release()
             cv2.destroyAllWindows()
@@ -55,9 +69,9 @@ def main():
         if latest_video_path != last_video_path:
             last_video_path = latest_video_path
             print(f"Loading new video: {last_video_path}")
-            play_video(last_video_path)  # This will loop until a new video is detected
-
-        time.sleep(1)  # Sleep briefly before checking again
+        
+        # Play the current video, checking for a new one
+        last_video_path = play_video(last_video_path)
 
 if __name__ == "__main__":
     main()

@@ -125,7 +125,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         if results_2 and results_2.detections:
             for detection in results_2.detections:
                 print(f"Detection 2 score: {detection.score[0]:.4f}")
-
+        print("*")
 
         cv2.imwrite("__debug_frame.jpg", frame_1)
 

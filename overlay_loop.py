@@ -4,10 +4,11 @@ import time
 import yaml
 
 import cv2
-import mediapipe as mp
 import numpy as np
 from picamera2 import Picamera2
-
+import mediapipe as mp
+from pycoral.utils.edgetpu import make_interpreter
+from pycoral.adapters import common
 
 
 # Read data from the config.
@@ -22,16 +23,22 @@ ALPHA = config["ALPHA"]
 CAPTURE_DURATION = config["CAPTURE_DURATION"]
 FPS = config["FPS"]
 
-
-# Initialize MediaPipe Face Detection
-mp_face_detection = mp.solutions.face_detection
-mp_drawing = mp.solutions.drawing_utils
-
 # Initialize the picamera
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
                                                             "size": (WIDTH, HEIGHT)}))
 picam2.start()
+
+# Initialize MediaPipe Face Detection
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
+
+# Load the TFLite model for overlaying
+interpreter = make_interpreter("overlay_model.tflite")
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 # When the program starts, save two new videos to the play folder.
 frame_count = int(CAPTURE_DURATION * FPS)
@@ -51,80 +58,57 @@ for _ in range(2):
     # Finalize the memmap file
     start_memmap.flush()
 
-
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
-
     while True:
         # Snap two photos for temporal filtering to reduce the likelihood of false positives
         frame_1 = picam2.capture_array()
         time.sleep(0.5)
         frame_2 = picam2.capture_array()
 
-        # Process the frame and detect faces
+        # Process the frames and detect faces
         results_1 = face_detection.process(frame_1)
-        if results_1.detections:
-            print("Face detected in image 1")
         results_2 = face_detection.process(frame_2)
-        if results_2.detections:
-            print("Face detected in image 2")
-        
+
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        cv2.imwrite(f"__debug_frame_1.jpg", frame_1)
-        cv2.imwrite(f"__debug_frame_2.jpg", frame_2)
-
-        # Check if any faces are detected
         if results_1.detections and results_2.detections:
             print(f"Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 
-            # # Create a copy of the frame for debugging. TODO: eventually get rid of this.
-            # debug_frame_1 = frame_1.copy()
-            # debug_frame_2 = frame_2.copy()
-
-            # # Draw bounding boxes on the debug frame
-            # for detection in results_1.detections:
-            #     mp_drawing.draw_detection(debug_frame_1, detection)
-            # for detection in results_2.detections:
-            #     mp_drawing.draw_detection(debug_frame_2, detection)
-
-            # # Save the debug frames with bounding boxes
-            # cv2.imwrite(f"debug_frames/_debug_frame_1_{current_time}.jpg", debug_frame_1)
-            # cv2.imwrite(f"debug_frames/_debug_frame_2_{current_time}.jpg", debug_frame_2)
-
-            # How many frames to record?
             frame_count = int(CAPTURE_DURATION * FPS)
-
-            # Create a memory-mapped array to store the frames
             memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
             new_images_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
 
             for frame_num in range(frame_count):
                 frame = picam2.capture_array()
-                # Store the frame in the correct index
                 new_images_memmap[frame_num] = frame
 
-            # Finalize the memmap file
             new_images_memmap.flush()
 
-            # Get the most recent composite to add to the incoming frames to create the next composite.
-            composites_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f)
-                                                    for f in os.listdir(PLAY_DIR)])))
+            composites_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)])))
             most_recent_memmap_composite_path = composites_paths[0]
-            most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path,
-                                                     dtype='uint8', mode='r', shape=memmap_shape)
+            most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path, dtype='uint8', mode='r', shape=memmap_shape)
 
-            # Overlay the images frame by frame
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
             print(f"Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
             for frame_num in range(frame_count):
-                output_memmap[frame_num] = (
-                    ALPHA * new_images_memmap[frame_num] +
-                    (1 - ALPHA) * most_recent_composite_memmap[frame_num])
+                # Prepare the input tensors
+                input_1 = np.expand_dims(new_images_memmap[frame_num], axis=0)
+                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num], axis=0)
+
+                interpreter.set_tensor(input_details[0]['index'], input_1)
+                interpreter.set_tensor(input_details[1]['index'], input_2)
+
+                # Run inference
+                interpreter.invoke()
+
+                # Get the result
+                output_frame = interpreter.get_tensor(output_details[0]['index'])
+                output_memmap[frame_num] = output_frame[0]
 
             output_memmap.flush()
 
@@ -134,7 +118,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             if len(composites_paths) > 5:
                 for f in composites_paths[5:]:
                     os.remove(f)
-
         else:
             print(f"No face detected: {current_time}")
             time.sleep(1)

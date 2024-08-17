@@ -1,10 +1,11 @@
 import os
 import subprocess
+import time
 import yaml
 import cv2
 import numpy as np
 
-# Read data from the config.
+# Read data from the config
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 WIDTH = config["WIDTH"]
@@ -16,53 +17,47 @@ FPS = config["FPS"]
 # Set the DISPLAY environment variable for the current process
 os.environ["DISPLAY"] = ":0"
 
-# Set to fullscreen.
+# Set to fullscreen
 cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-# Get the frame count
-frame_count = CAPTURE_DURATION * FPS
+def get_latest_video_path(play_dir):
+    """Returns the path of the most recent video in the directory."""
+    file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
+    return file_paths[0] if file_paths else None
 
-# Configure the screen properly (run only once, ideally after the screen turns on)
-subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
-               shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-while True:
-    # Get the paths to all the files in the play_dir, sorted from newest to oldest.
-    file_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)])))
-
-    # Play the most recent video file (or second most recent if necessary)
-    play_file_path = file_paths[0]
-
-    print(f"Streaming {play_file_path}")
-
-    # Open the video file
-    cap = cv2.VideoCapture(play_file_path)
-
+def play_video(video_path):
+    """Play the video in a loop."""
+    cap = cv2.VideoCapture(video_path)
     while True:
         ret, frame = cap.read()
-
         if not ret:
-            # Restart the video when it ends
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video if it ends
             continue
-
-        # Display the frame in fullscreen
         cv2.imshow("window", frame)
-
-        # Wait for user input (loop at the desired FPS)
-        key = cv2.waitKey(int(1000 / FPS))  # Adjust this to match the desired FPS
-
-        # Exit if 'q' is pressed
+        key = cv2.waitKey(int(1000 / FPS))  # Wait for key press or continue playback
         if key == ord("q"):
-            break
+            cap.release()
+            cv2.destroyAllWindows()
+            exit(0)  # Exit the entire program
 
-    # Release the video capture object
-    cap.release()
+def main():
+    last_video_path = None
 
-    # Exit if 'q' is pressed (for the outer loop)
-    if key == ord("q"):
-        break
+    # Configure the screen properly (run only once)
+    subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
+                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-# Destroy all OpenCV windows
-cv2.destroyAllWindows()
+    while True:
+        latest_video_path = get_latest_video_path(PLAY_DIR)
+
+        # Check if a new video has been created
+        if latest_video_path != last_video_path:
+            last_video_path = latest_video_path
+            print(f"Loading new video: {last_video_path}")
+            play_video(last_video_path)  # This will loop until a new video is detected
+
+        time.sleep(1)  # Sleep briefly before checking again
+
+if __name__ == "__main__":
+    main()

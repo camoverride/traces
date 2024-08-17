@@ -92,8 +92,11 @@ frame_count = int(CAPTURE_DURATION * FPS)
 print_memory_usage("Before Initial Capture")
 print("Capturing initial 3-second video...")
 current_composite_frames = capture_frames(frame_count)
-save_output_video(os.path.join(PLAY_DIR, "_play_video.mp4"), current_composite_frames, FPS)
-print("Initial video saved as _play_video.mp4")
+
+# Generate a unique filename using a timestamp
+initial_video_filename = os.path.join(PLAY_DIR, f"_play_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
+save_output_video(initial_video_filename, current_composite_frames, FPS)
+print(f"Initial video saved as {initial_video_filename}")
 print_memory_usage("After Initial Capture and Save")
 
 # Begin the main loop
@@ -129,9 +132,11 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             current_composite_frames = blended_frames
 
             print_memory_usage("Before Saving Blended Video")
+            # Generate a unique filename using a timestamp
+            new_video_filename = os.path.join(PLAY_DIR, f"_play_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
             # Save the new composite as the play video
-            save_output_video(os.path.join(PLAY_DIR, "_play_video.mp4"), current_composite_frames, FPS)
-            print("Updated video saved as _play_video.mp4")
+            save_output_video(new_video_filename, current_composite_frames, FPS)
+            print(f"Updated video saved as {new_video_filename}")
 
         else:
             print(f"No face detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

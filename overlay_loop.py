@@ -117,6 +117,11 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
                 # Get the result
                 output_frame = interpreter.get_tensor(output_details[0]['index'])
+
+                # Debug: Print the output tensor values
+                print(f"Frame {frame_num}: Output tensor min={output_frame.min()}, max={output_frame.max()}")
+
+                # Scale the output back to 0-255 range and convert to uint8
                 output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
 
 

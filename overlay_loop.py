@@ -85,7 +85,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Get current time for filenames
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if results_1.detections and results_2.detections:
+        if 1==1:#results_1.detections and results_2.detections:
             face_detection_time = t.time()
             print(f"Face detected! Processing frames...")
 

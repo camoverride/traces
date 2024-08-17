@@ -7,7 +7,7 @@ import yaml
 from picamera2 import Picamera2
 import mediapipe as mp
 import psutil
-
+from image_processing import process_image
 
 
 # Read data from the config
@@ -85,7 +85,7 @@ current_composite_frames = capture_frames(frame_count)
 # Generate a unique filename using a timestamp and save the video
 initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
 save_output_video(initial_video_filename, current_composite_frames, FPS)
-print(f"Initial video saved as {initial_video_filename}")
+print(f"Initial video saved as {initial_video_filename}\n\n\n")
 
 
 # Begin the main loop
@@ -96,13 +96,15 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         # Capture two frames for face detection
         frame_1 = picam2.capture_array()
+        processed_frame_1 = process_image(frame_1)
         t.sleep(0.3)
         frame_2 = picam2.capture_array()
+        processed_frame_2 = process_image(frame_2)
 
         # Detect faces
         detection_start_time = t.time()
-        results_1 = face_detection.process(frame_1)
-        results_2 = face_detection.process(frame_2)
+        results_1 = face_detection.process(processed_frame_1)
+        results_2 = face_detection.process(processed_frame_2)
         detection_end_time = t.time()
         print(f"  Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
@@ -141,9 +143,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         else:
             print(f"  No face detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            t.sleep(0.5)
+            t.sleep(0.2)
 
         loop_end_time = t.time()
         print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
         print("--------------------------------------------")
-

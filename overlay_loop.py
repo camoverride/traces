@@ -25,7 +25,8 @@ ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if 
 
 # Initialize the picamera
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (WIDTH, HEIGHT)}))
+# picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (WIDTH, HEIGHT)}))
+picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888"}))
 picam2.start()
 
 # Initialize MediaPipe Face Detection

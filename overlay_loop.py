@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-import time
+import time as t  # Avoid conflict with 'time' function
 import yaml
 
 import cv2
@@ -59,21 +59,29 @@ for _ in range(2):
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
     while True:
+        start_time = t.time()  # Start timing the loop
+        
         # Snap two photos for temporal filtering to reduce the likelihood of false positives
+        capture_start_time = t.time()
         frame_1 = picam2.capture_array()
-        time.sleep(0.5)
+        t.sleep(0.5)
         frame_2 = picam2.capture_array()
-
+        capture_end_time = t.time()
+        print(f"Time taken to capture frames: {capture_end_time - capture_start_time:.4f} seconds")
+        
         # Process the frames and detect faces
+        detection_start_time = t.time()
         results_1 = face_detection.process(frame_1)
         results_2 = face_detection.process(frame_2)
-
+        detection_end_time = t.time()
+        print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
+        
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if 1==1:#results_1.detections and results_2.detections:
-            t = datetime.now().strftime("%H-%M-%S")
-            print(f"{t} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
+        if results_1.detections and results_2.detections:
+            t_now = datetime.now().strftime("%H-%M-%S")
+            print(f"{t_now} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 
             frame_count = int(CAPTURE_DURATION * FPS)
             memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
@@ -90,11 +98,12 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path, dtype='uint8', mode='r', shape=memmap_shape)
 
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
-            t = datetime.now().strftime("%H-%M-%S")
-            print(f"{t} - Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
+            t_now = datetime.now().strftime("%H-%M-%S")
+            print(f"{t_now} - Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
+            blending_start_time = t.time()
             for frame_num in range(frame_count):
                 # Prepare the input tensors
                 input_1 = np.expand_dims(new_images_memmap[frame_num].astype(np.float32) / 255.0, axis=0)
@@ -111,17 +120,24 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
                 # Scale the output back to 0-255 range and convert to uint8
                 output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
+            blending_end_time = t.time()
+            print(f"Time taken for blending and saving frames: {blending_end_time - blending_start_time:.4f} seconds")
 
             output_memmap.flush()
 
             del new_images_memmap, most_recent_composite_memmap, output_memmap
 
             # Clean up old files from play dir if there are too many
+            cleanup_start_time = t.time()
             if len(composites_paths) > 5:
                 for f in composites_paths[5:]:
                     os.remove(f)
+            cleanup_end_time = t.time()
+            print(f"Time taken for cleanup: {cleanup_end_time - cleanup_start_time:.4f} seconds")
         else:
             print(f"No face detected: {current_time}")
-            time.sleep(1)
+            t.sleep(1)
 
+        loop_end_time = t.time()
+        print(f"Total time for loop iteration: {loop_end_time - start_time:.4f} seconds")
         print("--------------------------------------------")

@@ -90,7 +90,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_1 = face_detection.process(frame_1)
         results_2 = face_detection.process(frame_2)
 
-        if results_1.detections and results_2.detections:
+        if 1==1:#results_1.detections and results_2.detections:
             print("Face detected! Capturing and blending new frames...")
 
             # Capture new frames as a batch

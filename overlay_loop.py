@@ -1,14 +1,12 @@
-from datetime import datetime
-import os
-import time as t  # Avoid conflict with 'time' function
-import yaml
-
-import cv2
 import numpy as np
+import cv2
+import os
+from datetime import datetime
+import time as t
+import yaml
 from picamera2 import Picamera2
 import mediapipe as mp
 from pycoral.utils.edgetpu import make_interpreter
-from pycoral.adapters import common
 
 # Read data from the config.
 with open("config.yaml", "r") as file:
@@ -23,8 +21,7 @@ FPS = config["FPS"]
 
 # Initialize the picamera
 picam2 = Picamera2()
-picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888",
-                                                            "size": (WIDTH, HEIGHT)}))
+picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (WIDTH, HEIGHT)}))
 picam2.start()
 
 # Initialize MediaPipe Face Detection
@@ -38,14 +35,23 @@ interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# When the program starts, save two new videos to the play folder.
-frame_count = int(CAPTURE_DURATION * FPS)
+# Preload frames into memory
+def preload_frames(memmap_path, shape):
+    print(f"Preloading frames from {memmap_path}...")
+    start_time = t.time()
+    memmap_data = np.memmap(memmap_path, dtype='uint8', mode='r', shape=shape)
+    frames = np.array(memmap_data)
+    del memmap_data  # Clean up memmap to release the file handle
+    end_time = t.time()
+    print(f"Preloading completed in {end_time - start_time:.4f} seconds")
+    return frames
 
+# Save initial videos to play folder
+frame_count = int(CAPTURE_DURATION * FPS)
 for _ in range(2):
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     filename = f"{current_time}.dat"
     start_memmap_path = os.path.join(PLAY_DIR, filename)
-    print(f"Creating start file {start_memmap_path}")
     memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
     start_memmap = np.memmap(start_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
@@ -53,91 +59,100 @@ for _ in range(2):
         frame = picam2.capture_array()
         start_memmap[frame_num] = frame
 
-    # Finalize the memmap file
     start_memmap.flush()
+    del start_memmap
 
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
     while True:
-        start_time = t.time()  # Start timing the loop
-        
-        # Snap two photos for temporal filtering to reduce the likelihood of false positives
+        loop_start_time = t.time()
+
+        # Capture frames for temporal filtering
         capture_start_time = t.time()
         frame_1 = picam2.capture_array()
         t.sleep(0.5)
         frame_2 = picam2.capture_array()
         capture_end_time = t.time()
         print(f"Time taken to capture frames: {capture_end_time - capture_start_time:.4f} seconds")
-        
-        # Process the frames and detect faces
+
+        # Detect faces
         detection_start_time = t.time()
         results_1 = face_detection.process(frame_1)
         results_2 = face_detection.process(frame_2)
         detection_end_time = t.time()
         print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
-        
-        # Get the time for filenaming
+
+        # Get current time for filenames
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if 1==1:#results_1.detections and results_2.detections:
-            t_now = datetime.now().strftime("%H-%M-%S")
-            print(f"{t_now} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
+        if results_1.detections and results_2.detections:
+            face_detection_time = t.time()
+            print(f"Face detected! Processing frames...")
 
-            frame_count = int(CAPTURE_DURATION * FPS)
-            memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
-            new_images_memmap = np.memmap(NEW_IMAGES_MEMMAP_PATH, dtype='uint8', mode='w+', shape=memmap_shape)
-
+            # Capture a series of frames into memory
+            capture_series_start_time = t.time()
+            new_frames = []
             for frame_num in range(frame_count):
                 frame = picam2.capture_array()
-                new_images_memmap[frame_num] = frame
+                new_frames.append(frame)
+            new_frames = np.array(new_frames)
+            capture_series_end_time = t.time()
+            print(f"Time taken to capture series of frames: {capture_series_end_time - capture_series_start_time:.4f} seconds")
 
-            new_images_memmap.flush()
-
-            composites_paths = list(reversed(sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)])))
+            # Load the most recent composite from memory
+            load_start_time = t.time()
+            composites_paths = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], reverse=True)
             most_recent_memmap_composite_path = composites_paths[0]
-            most_recent_composite_memmap = np.memmap(most_recent_memmap_composite_path, dtype='uint8', mode='r', shape=memmap_shape)
+            most_recent_composite_memmap_shape = (frame_count, HEIGHT, WIDTH, 3)
+            most_recent_composite_frames = preload_frames(most_recent_memmap_composite_path, most_recent_composite_memmap_shape)
+            load_end_time = t.time()
+            print(f"Time taken to load most recent composite: {load_end_time - load_start_time:.4f} seconds")
 
+            # Prepare for saving output
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
-            t_now = datetime.now().strftime("%H-%M-%S")
-            print(f"{t_now} - Combining frames from {NEW_IMAGES_MEMMAP_PATH} and {most_recent_memmap_composite_path} to create {output_memmap_path}")
-
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
+            # Perform blending with TPU
             blending_start_time = t.time()
             for frame_num in range(frame_count):
-                # Prepare the input tensors
-                input_1 = np.expand_dims(new_images_memmap[frame_num].astype(np.float32) / 255.0, axis=0)
-                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num].astype(np.float32) / 255.0, axis=0)
+                input_1 = np.expand_dims(new_frames[frame_num].astype(np.float32) / 255.0, axis=0)
+                input_2 = np.expand_dims(most_recent_composite_frames[frame_num].astype(np.float32) / 255.0, axis=0)
 
                 interpreter.set_tensor(input_details[0]['index'], input_1)
                 interpreter.set_tensor(input_details[1]['index'], input_2)
 
-                # Run inference
                 interpreter.invoke()
 
-                # Get the result
                 output_frame = interpreter.get_tensor(output_details[0]['index'])
-
-                # Scale the output back to 0-255 range and convert to uint8
                 output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
+
+            output_memmap.flush()
+            del output_memmap
             blending_end_time = t.time()
             print(f"Time taken for blending and saving frames: {blending_end_time - blending_start_time:.4f} seconds")
 
-            output_memmap.flush()
-
-            del new_images_memmap, most_recent_composite_memmap, output_memmap
-
-            # Clean up old files from play dir if there are too many
+            # Clean up old files if necessary
             cleanup_start_time = t.time()
             if len(composites_paths) > 5:
                 for f in composites_paths[5:]:
                     os.remove(f)
             cleanup_end_time = t.time()
             print(f"Time taken for cleanup: {cleanup_end_time - cleanup_start_time:.4f} seconds")
+
         else:
+            no_face_detected_time = t.time()
             print(f"No face detected: {current_time}")
             t.sleep(1)
 
         loop_end_time = t.time()
-        print(f"Total time for loop iteration: {loop_end_time - start_time:.4f} seconds")
+        total_loop_time = loop_end_time - loop_start_time
+        print(f"Total time for loop iteration: {total_loop_time:.4f} seconds")
+        print(f"Detailed breakdown:")
+        print(f"- Capture time: {capture_end_time - capture_start_time:.4f} seconds")
+        print(f"- Face detection time: {detection_end_time - detection_start_time:.4f} seconds")
+        if results_1.detections and results_2.detections:
+            print(f"- Time to capture series of frames: {capture_series_end_time - capture_series_start_time:.4f} seconds")
+            print(f"- Time to load most recent composite: {load_end_time - load_start_time:.4f} seconds")
+            print(f"- Time for blending and saving: {blending_end_time - blending_start_time:.4f} seconds")
+            print(f"- Time for cleanup: {cleanup_end_time - cleanup_start_time:.4f} seconds")
         print("--------------------------------------------")

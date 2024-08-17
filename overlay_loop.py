@@ -107,18 +107,18 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         # Capture two frames for face detection (temporal filtering)
         frame_1 = picam2.capture_array()
-        processed_frame_1 = process_image(frame_1)
+        # processed_frame_1 = process_image(frame_1)
         t.sleep(0.5)
         frame_2 = picam2.capture_array()
-        processed_frame_2 = process_image(frame_2)
+        # processed_frame_2 = process_image(frame_2)
 
         # Detect faces
         detection_start_time = t.time()
-        results_1 = face_detection.process(processed_frame_1)
-        results_2 = face_detection.process(processed_frame_2)
+        results_1 = face_detection.process(frame_1)
+        results_2 = face_detection.process(frame_1)
         detection_end_time = t.time()
 
-        cv2.imwrite("__debug_frame.jpg", processed_frame_1)
+        cv2.imwrite("__debug_frame.jpg", frame_1)
 
         if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
             print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")

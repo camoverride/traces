@@ -1,10 +1,22 @@
 import os
+import subprocess
 import cv2
 import time
 
 # Configuration
 FPS = 10  # Adjust this to match the desired FPS
 VIDEO_INFO_FILE = "./_completed_video.txt"
+
+def set_display_orientation():
+    """
+    Configures the display and sets the monitor orientation.
+    """
+    # Set the DISPLAY environment variable for the current process
+    os.environ["DISPLAY"] = ":0"
+
+    # Configure the screen orientation (run only once)
+    subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
+                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 def get_latest_video_path():
     """
@@ -27,7 +39,6 @@ def play_video(video_path):
         print(f"Failed to open video: {video_path}")
         return None
 
-    frame_counter = 0
     while True:
         ret, frame = cap.read()
 
@@ -52,6 +63,9 @@ def play_video(video_path):
 
 def main():
     last_video_path = None
+
+    # Set the display orientation and configure the screen
+    set_display_orientation()
 
     # Set to fullscreen
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)

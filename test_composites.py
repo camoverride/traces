@@ -50,7 +50,7 @@ input_details = interpreter.get_input_details()
 _, target_height, target_width, _ = input_details[0]['shape']
 
 # Choose a frame index to inspect (e.g., the first frame)
-frame_idx = 0
+frame_idx = 50
 frame_1 = memmap_1[frame_idx]
 frame_2 = memmap_2[frame_idx]
 

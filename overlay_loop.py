@@ -99,8 +99,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
             for frame_num in range(frame_count):
                 # Prepare the input tensors
-                input_1 = np.expand_dims(new_images_memmap[frame_num], axis=0)
-                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num], axis=0)
+                input_1 = np.expand_dims(new_images_memmap[frame_num], axis=0).astype(np.float32) / 255.0
+                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num], axis=0).astype(np.float32) / 255.0
 
                 interpreter.set_tensor(input_details[0]['index'], input_1)
                 interpreter.set_tensor(input_details[1]['index'], input_2)
@@ -110,7 +110,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
                 # Get the result
                 output_frame = interpreter.get_tensor(output_details[0]['index'])
-                output_memmap[frame_num] = output_frame[0]
+                output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
+
 
             output_memmap.flush()
 

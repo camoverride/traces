@@ -1,9 +1,19 @@
 import numpy as np
 import cv2
 from pycoral.utils.edgetpu import make_interpreter
+import os
 
-# Function to load a memmap .dat file
-def load_memmap_file(file_path, shape):
+# Function to infer the number of frames based on file size and dimensions
+def infer_frame_count(file_path, height, width, channels):
+    frame_size = height * width * channels
+    file_size = os.path.getsize(file_path)
+    frame_count = file_size // frame_size
+    return frame_count
+
+# Function to load a memmap .dat file with inferred shape
+def load_memmap_file(file_path, height, width, channels):
+    frame_count = infer_frame_count(file_path, height, width, channels)
+    shape = (frame_count, height, width, channels)
     return np.memmap(file_path, dtype='uint8', mode='r', shape=shape)
 
 # Function to preprocess the frame for the model
@@ -30,27 +40,24 @@ def run_inference(interpreter, input_1, input_2):
 interpreter = make_interpreter("overlay_model.tflite")
 interpreter.allocate_tensors()
 
-# Define the shape of the memmap files (based on your data)
-frame_count = 30  # example, adjust based on your data
-height = 480  # example, adjust based on your data
-width = 640  # example, adjust based on your data
-channels = 3  # RGB
+# Known dimensions (height, width, channels)
+height = 1080  # Update this based on your data
+width = 1920    # Update this based on your data
+channels = 3   # RGB
 
-memmap_shape = (frame_count, height, width, channels)
+# Load two memmap .dat files with inferred frame count
+file_1_path = "_current_frames_1.dat"
+file_2_path = "_current_frames_2.dat"
 
-# Load two memmap .dat files
-file_1_path = "_current_frames.dat"
-file_2_path = "_current_frames.dat"
-
-memmap_1 = load_memmap_file(file_1_path, memmap_shape)
-memmap_2 = load_memmap_file(file_2_path, memmap_shape)
+memmap_1 = load_memmap_file(file_1_path, height, width, channels)
+memmap_2 = load_memmap_file(file_2_path, height, width, channels)
 
 # Get expected input size for the model
 input_details = interpreter.get_input_details()
 _, target_height, target_width, _ = input_details[0]['shape']
 
-# Choose a frame index to inspect (e.g., the first frame)
-frame_idx = 50
+# Choose a frame index to inspect (ensure it is within range)
+frame_idx = min(50, len(memmap_1) - 1)  # Ensure frame_idx is within the valid range
 frame_1 = memmap_1[frame_idx]
 frame_2 = memmap_2[frame_idx]
 

@@ -2,6 +2,7 @@ import os
 import subprocess
 import yaml
 import cv2
+import time as t
 
 
 
@@ -29,12 +30,22 @@ def hide_mouse(event, x, y, flags, param):
 cv2.setMouseCallback("window", hide_mouse)
 
 
-def get_second_latest_video_path(play_dir):
+def is_file_complete(file_path, check_duration=1.0):
     """
-    Returns the path of the second most recent video in the directory.
+    Check if the file size is stable over a short duration, indicating it is done being written to.
+    """
+    initial_size = os.path.getsize(file_path)
+    t.sleep(check_duration)
+    final_size = os.path.getsize(file_path)
+    return initial_size == final_size
+
+
+def get_latest_videos(play_dir):
+    """
+    Returns the paths of the most recent and second most recent videos in the directory.
     """
     file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir)])))
-    return file_paths[1] if len(file_paths) > 1 else None
+    return file_paths[0] if len(file_paths) > 0 else None, file_paths[1] if len(file_paths) > 1 else None
 
 
 def play_video(video_path):
@@ -55,11 +66,15 @@ def play_video(video_path):
 
         # Check if a new video is available every few frames
         if frame_counter % FPS == 0:  # Check every second
-            new_video_path = get_second_latest_video_path(PLAY_DIR)
-            if new_video_path != video_path:
-                print(f"New video detected: {new_video_path}")
+            most_recent_video, second_most_recent_video = get_latest_videos(PLAY_DIR)
+            if most_recent_video != video_path and is_file_complete(most_recent_video):
+                print(f"New completed video detected: {most_recent_video}")
                 cap.release()
-                return new_video_path
+                return most_recent_video
+            elif second_most_recent_video != video_path:
+                print(f"Falling back to the second most recent video: {second_most_recent_video}")
+                cap.release()
+                return second_most_recent_video
 
         frame_counter += 1
 
@@ -77,7 +92,13 @@ def main():
                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     while True:
-        latest_video_path = get_second_latest_video_path(PLAY_DIR)
+        most_recent_video, second_most_recent_video = get_latest_videos(PLAY_DIR)
+
+        # Decide which video to play based on whether the most recent one is complete
+        if most_recent_video and is_file_complete(most_recent_video):
+            latest_video_path = most_recent_video
+        else:
+            latest_video_path = second_most_recent_video
 
         # Check if a new video has been created
         if latest_video_path != last_video_path:

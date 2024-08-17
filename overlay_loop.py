@@ -42,32 +42,35 @@ def capture_frames(frame_count):
         frames.append(frame)
     return np.array(frames)
 
-# Function to save output video
 def save_output_video(output_video_path, output_frames, fps):
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'mp4v' for MP4 format
     out = cv2.VideoWriter(output_video_path, fourcc, fps, (WIDTH, HEIGHT))
     for frame in output_frames:
         out.write(frame)
     out.release()
 
 # Function to process frames using the TPU with batch processing
-def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames):
-    # Normalize and expand dimensions for the model
-    new_frames_normalized = new_frames.astype(np.float32) / 255.0
-    current_frames_normalized = current_frames.astype(np.float32) / 255.0
+def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames, batch_size=50):
+    num_frames = new_frames.shape[0]
+    output_frames = np.empty_like(new_frames)
+    
+    for start in range(0, num_frames, batch_size):
+        end = min(start + batch_size, num_frames)
+        batch_new_frames = new_frames[start:end].astype(np.float32) / 255.0
+        batch_current_frames = current_frames[start:end].astype(np.float32) / 255.0
 
-    # Set the tensors for batch processing
-    interpreter.set_tensor(input_details[0]['index'], new_frames_normalized)
-    interpreter.set_tensor(input_details[1]['index'], current_frames_normalized)
+        # Set the tensors for batch processing
+        interpreter.set_tensor(input_details[0]['index'], batch_new_frames)
+        interpreter.set_tensor(input_details[1]['index'], batch_current_frames)
 
-    # Run inference
-    interpreter.invoke()
+        # Run inference
+        interpreter.invoke()
 
-    # Get the blended output
-    output_frames = interpreter.get_tensor(output_details[0]['index'])
-    output_frames_uint8 = (output_frames * 255).astype(np.uint8)
+        # Get the blended output
+        batch_output_frames = interpreter.get_tensor(output_details[0]['index'])
+        output_frames[start:end] = (batch_output_frames * 255).astype(np.uint8)
 
-    return output_frames_uint8
+    return output_frames
 
 # Initial capture to create the first composite video
 frame_count = int(CAPTURE_DURATION * FPS)
@@ -97,8 +100,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_frames = capture_frames(frame_count)
 
             # Blend the batch of new frames with the current composite frames using the TPU
-            blended_frames = process_frames_batch(interpreter, input_details, output_details, new_frames, current_composite_frames)
-
+            blended_frames = process_frames_batch(interpreter, input_details, output_details, new_frames, current_composite_frames, batch_size=50)
             # Update the current composite frames
             current_composite_frames = blended_frames
 

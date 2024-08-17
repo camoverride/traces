@@ -1,3 +1,4 @@
+import threading
 import numpy as np
 import cv2
 import os
@@ -35,7 +36,7 @@ interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Preload frames into memory
+# Function to preload frames into memory
 def preload_frames(memmap_path, shape):
     print(f"Preloading frames from {memmap_path}...")
     start_time = t.time()
@@ -45,6 +46,31 @@ def preload_frames(memmap_path, shape):
     end_time = t.time()
     print(f"Preloading completed in {end_time - start_time:.4f} seconds")
     return frames
+
+# Function to save output frames asynchronously
+def save_output_frames(output_memmap_path, memmap_shape, output_frames):
+    output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
+    for i in range(output_frames.shape[0]):
+        output_memmap[i] = output_frames[i]
+    output_memmap.flush()
+    del output_memmap
+
+# Function to process frames using the TPU
+def process_frames(frame_count, HEIGHT, WIDTH, interpreter, input_details, output_details, new_frames, most_recent_frames):
+    output_frames = np.empty_like(new_frames)
+    for frame_num in range(frame_count):
+        input_1 = np.expand_dims(new_frames[frame_num].astype(np.float32) / 255.0, axis=0)
+        input_2 = np.expand_dims(most_recent_frames[frame_num].astype(np.float32) / 255.0, axis=0)
+
+        interpreter.set_tensor(input_details[0]['index'], input_1)
+        interpreter.set_tensor(input_details[1]['index'], input_2)
+
+        interpreter.invoke()
+
+        output_frame = interpreter.get_tensor(output_details[0]['index'])
+        output_frames[frame_num] = (output_frame[0] * 255).astype(np.uint8)
+
+    return output_frames
 
 # Save initial videos to play folder
 frame_count = int(CAPTURE_DURATION * FPS)
@@ -61,6 +87,9 @@ for _ in range(2):
 
     start_memmap.flush()
     del start_memmap
+
+# Initialize threading for saving frames
+save_thread = None
 
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
@@ -85,7 +114,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Get current time for filenames
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if 1==1:#results_1.detections and results_2.detections:
+        if results_1.detections and results_2.detections:
             face_detection_time = t.time()
             print(f"Face detected! Processing frames...")
 
@@ -108,28 +137,20 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             load_end_time = t.time()
             print(f"Time taken to load most recent composite: {load_end_time - load_start_time:.4f} seconds")
 
-            # Prepare for saving output
-            output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
-            output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
-
-            # Perform blending with TPU
+            # Process frames using TPU (in the main thread)
             blending_start_time = t.time()
-            for frame_num in range(frame_count):
-                input_1 = np.expand_dims(new_frames[frame_num].astype(np.float32) / 255.0, axis=0)
-                input_2 = np.expand_dims(most_recent_composite_frames[frame_num].astype(np.float32) / 255.0, axis=0)
-
-                interpreter.set_tensor(input_details[0]['index'], input_1)
-                interpreter.set_tensor(input_details[1]['index'], input_2)
-
-                interpreter.invoke()
-
-                output_frame = interpreter.get_tensor(output_details[0]['index'])
-                output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
-
-            output_memmap.flush()
-            del output_memmap
+            output_frames = process_frames(frame_count, HEIGHT, WIDTH, interpreter, input_details, output_details, new_frames, most_recent_composite_frames)
             blending_end_time = t.time()
-            print(f"Time taken for blending and saving frames: {blending_end_time - blending_start_time:.4f} seconds")
+            print(f"Time taken for blending frames: {blending_end_time - blending_start_time:.4f} seconds")
+
+            # Wait for the previous save thread to finish, if necessary
+            if save_thread is not None:
+                save_thread.join()
+
+            # Start a new thread to save the output frames
+            output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
+            save_thread = threading.Thread(target=save_output_frames, args=(output_memmap_path, memmap_shape, output_frames))
+            save_thread.start()
 
             # Clean up old files if necessary
             cleanup_start_time = t.time()
@@ -153,6 +174,10 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         if results_1.detections and results_2.detections:
             print(f"- Time to capture series of frames: {capture_series_end_time - capture_series_start_time:.4f} seconds")
             print(f"- Time to load most recent composite: {load_end_time - load_start_time:.4f} seconds")
-            print(f"- Time for blending and saving: {blending_end_time - blending_start_time:.4f} seconds")
+            print(f"- Time for blending: {blending_end_time - blending_start_time:.4f} seconds")
             print(f"- Time for cleanup: {cleanup_end_time - cleanup_start_time:.4f} seconds")
         print("--------------------------------------------")
+
+# Ensure all threads finish before exiting
+if save_thread is not None:
+    save_thread.join()

@@ -41,20 +41,60 @@ def print_memory_usage(label):
     mem_info = process.memory_info()
     print(f"[{label}] Memory Usage: RSS = {mem_info.rss / (1024 * 1024):.2f} MB")
 
-# Function to capture frames into memory
-def capture_frames(frame_count):
-    print(f"Capturing {frame_count} frames...")
-    frames = []
-    for i in range(frame_count):
-        frame = picam2.capture_array()
-        frames.append(frame)
-        if i % 10 == 0:
-            print(f"Captured frame {i + 1}/{frame_count}")
-            print_memory_usage(f"After Capturing Frame {i + 1}")
-    frames_array = np.array(frames)
-    print(f"Captured {frame_count} frames successfully.")
-    print_memory_usage("After Capturing All Frames")
-    return frames_array
+# Function to process frames using the TPU with batch processing
+def process_frames_batch(interpreter, input_details, output_details, new_frames_batch, current_frames_batch):
+    print(f"Processing batch of {len(new_frames_batch)} frames...")
+
+    # Normalize and expand dimensions for the model
+    new_frames_batch_normalized = new_frames_batch.astype(np.float32) / 255.0
+    current_frames_batch_normalized = current_frames_batch.astype(np.float32) / 255.0
+
+    # Set the tensors for batch processing
+    interpreter.set_tensor(input_details[0]['index'], new_frames_batch_normalized)
+    interpreter.set_tensor(input_details[1]['index'], current_frames_batch_normalized)
+
+    # Run inference
+    interpreter.invoke()
+
+    # Get the blended output
+    blended_frames_batch = interpreter.get_tensor(output_details[0]['index'])
+    blended_frames_batch_uint8 = (blended_frames_batch * 255).astype(np.uint8)
+
+    print(f"Finished processing batch of {len(new_frames_batch)} frames.")
+    print_memory_usage("After Processing Batch")
+
+    return blended_frames_batch_uint8
+
+# Function to capture, process, and blend frames in smaller batches
+def capture_and_blend_batches(frame_count, batch_size, current_composite_frames):
+    blended_frames = []
+
+    for start in range(0, frame_count, batch_size):
+        end = min(start + batch_size, frame_count)
+        print(f"Capturing and blending batch {start + 1} to {end}...")
+
+        # Capture the batch of frames
+        new_frames_batch = []
+        for i in range(start, end):
+            frame = picam2.capture_array()
+            new_frames_batch.append(frame)
+            if i % 10 == 0:
+                print(f"Captured frame {i + 1}/{frame_count}")
+                print_memory_usage(f"After Capturing Frame {i + 1}")
+        new_frames_batch = np.array(new_frames_batch)
+
+        # Process and blend the batch
+        blended_frames_batch = process_frames_batch(interpreter, input_details, output_details, new_frames_batch, current_composite_frames[start:end])
+
+        # Append the blended frames to the output and update current_composite_frames
+        blended_frames.extend(blended_frames_batch)
+        current_composite_frames[start:end] = blended_frames_batch
+
+        # Release the memory used by the captured batch
+        del new_frames_batch
+        del blended_frames_batch
+
+    return np.array(blended_frames)
 
 # Function to save output video
 def save_output_video(output_video_path, output_frames, fps):
@@ -70,41 +110,11 @@ def save_output_video(output_video_path, output_frames, fps):
     print(f"Video saved successfully to {output_video_path}.")
     print_memory_usage("After Saving Video")
 
-# Function to process frames using the TPU with batch processing
-def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames, batch_size=50):
-    num_frames = new_frames.shape[0]
-    output_frames = np.empty_like(new_frames)
-    print(f"Processing {num_frames} frames in batches of {batch_size}...")
-
-    for start in range(0, num_frames, batch_size):
-        end = min(start + batch_size, num_frames)
-        print(f"Processing batch from frame {start + 1} to {end}...")
-        batch_new_frames = new_frames[start:end].astype(np.float32) / 255.0
-        batch_current_frames = current_frames[start:end].astype(np.float32) / 255.0
-
-        print_memory_usage(f"Before Setting Tensors for Batch {start + 1} to {end}")
-        # Set the tensors for batch processing
-        interpreter.set_tensor(input_details[0]['index'], batch_new_frames)
-        interpreter.set_tensor(input_details[1]['index'], batch_current_frames)
-
-        # Run inference
-        interpreter.invoke()
-
-        # Get the blended output
-        batch_output_frames = interpreter.get_tensor(output_details[0]['index'])
-        output_frames[start:end] = (batch_output_frames * 255).astype(np.uint8)
-
-        print(f"Processed batch from frame {start + 1} to {end} successfully.")
-        print_memory_usage(f"After Processing Batch {start + 1} to {end}")
-
-    print(f"Finished processing {num_frames} frames.")
-    return output_frames
-
 # Initial capture to create the first composite video
 frame_count = int(CAPTURE_DURATION * FPS)
 print_memory_usage("Before Initial Capture")
 print("Capturing initial 5-second video...")
-current_composite_frames = capture_frames(frame_count)
+current_composite_frames = capture_and_blend_batches(frame_count, frame_count, np.zeros((frame_count, HEIGHT, WIDTH, 3), dtype=np.uint8))
 save_output_video(os.path.join(PLAY_DIR, "_play_video.mp4"), current_composite_frames, FPS)
 print("Initial video saved as _play_video.mp4")
 print_memory_usage("After Initial Capture and Save")
@@ -127,19 +137,12 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         detection_end_time = t.time()
         print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
-        if 1==1:#results_1.detections and results_2.detections:
+        if results_1.detections and results_2.detections:
             print("Face detected! Capturing and blending new frames...")
             print_memory_usage("Before Capturing New Frames")
 
-            # Capture new frames as a batch
-            new_frames = capture_frames(frame_count)
-
-            print_memory_usage("Before Blending New Frames")
-            # Blend the batch of new frames with the current composite frames using the TPU
-            blended_frames = process_frames_batch(interpreter, input_details, output_details, new_frames, current_composite_frames, batch_size=50)
-
-            # Update the current composite frames
-            current_composite_frames = blended_frames
+            # Capture and blend frames in batches
+            current_composite_frames = capture_and_blend_batches(frame_count, 50, current_composite_frames)
 
             print_memory_usage("Before Saving Blended Video")
             # Save the new composite as the play video

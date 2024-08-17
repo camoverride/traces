@@ -96,6 +96,10 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
     while True:
         loop_start_time = t.time()
 
+        # Ensure the previous save thread has finished
+        if save_thread is not None:
+            save_thread.join()
+
         # Capture frames for temporal filtering
         capture_start_time = t.time()
         frame_1 = picam2.capture_array()
@@ -142,10 +146,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             output_frames = process_frames(frame_count, HEIGHT, WIDTH, interpreter, input_details, output_details, new_frames, most_recent_composite_frames)
             blending_end_time = t.time()
             print(f"Time taken for blending frames: {blending_end_time - blending_start_time:.4f} seconds")
-
-            # Wait for the previous save thread to finish, if necessary
-            if save_thread is not None:
-                save_thread.join()
 
             # Start a new thread to save the output frames
             output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")

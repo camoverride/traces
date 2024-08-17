@@ -79,7 +79,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if results_1.detections and results_2.detections:
+        if 1==1:results_1.detections and results_2.detections:
             t_now = datetime.now().strftime("%H-%M-%S")
             print(f"{t_now} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 

@@ -2,6 +2,7 @@ import os
 import subprocess
 import yaml
 import cv2
+import time
 
 # Read data from the config
 with open("config.yaml", "r") as file:
@@ -33,17 +34,16 @@ def get_latest_videos(play_dir):
     file_paths = list(reversed(sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir) if f.endswith(('.mp4', '.avi', '.mov'))])))
     return (file_paths[0], file_paths[1]) if len(file_paths) > 1 else (file_paths[0], None) if file_paths else (None, None)
 
-def is_file_complete(video_path):
+def is_file_complete(video_path, check_duration=0.05):
     """
-    Checks if a file is still being written to.
+    Checks if a file is still being written to by verifying if its size remains stable over a short period.
     Returns True if the file is complete, False if it's still being written to.
     """
-    try:
-        with open(video_path, 'ab') as f:
-            pass
-        return True
-    except OSError:
-        return False
+    initial_size = os.path.getsize(video_path)
+    time.sleep(check_duration)
+    final_size = os.path.getsize(video_path)
+    
+    return initial_size == final_size
 
 def play_video(video_path):
     """

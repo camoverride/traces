@@ -119,6 +119,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         detection_end_time = t.time()
 
         print(results_1.detections["score"])
+        print(results_1.detections)
         print(results_2.detections["score"])
 
 

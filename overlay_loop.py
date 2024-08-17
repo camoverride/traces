@@ -93,7 +93,6 @@ print(f"Initial video saved as {initial_video_filename}\n\n\n")
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
     while True:
-        print("Starting main loop")
         loop_start_time = t.time()
 
         # Capture two frames for face detection (temporal filtering)
@@ -108,22 +107,22 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_1 = face_detection.process(processed_frame_1)
         results_2 = face_detection.process(processed_frame_2)
         detection_end_time = t.time()
-        print(f"  Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
+        
 
         if results_1.detections and results_2.detections:
-            print("    Face detected! Capturing and blending new frames...")
+            print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
             # Capture new frames
             capture_start_time = t.time()
             new_frames = capture_frames(frame_count)
             capture_end_time = t.time()
-            print(f"    Time for frame capture: {capture_end_time - capture_start_time:.4f}")
+            print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
 
             # Perform alpha blending on all frames
             blend_start_time = t.time()
             blended_frames = alpha_blend_frames(new_frames, current_composite_frames, ALPHA)
             blend_end_time = t.time()
-            print(f"    Time for face blending: {blend_end_time - blend_start_time:.4f} seconds")
+            print(f"Time for face blending: {blend_end_time - blend_start_time:.4f} seconds")
 
             # Update the current composite frames
             current_composite_frames = blended_frames
@@ -134,8 +133,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             # Save the new composite as the play video
             save_output_video(new_video_filename, current_composite_frames, FPS)
             video_save_end_time = t.time()
-            print(f"    Time for saving video: {video_save_end_time - video_save_start_time:.4f}")
-            print(f"    Updated video saved as {new_video_filename}")
+            print(f"Time for saving video: {video_save_end_time - video_save_start_time:.4f}")
+            print(f"Updated video saved as {new_video_filename}")
 
             # Clean up old videos, keeping only the most recent two
             video_files = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], key=os.path.getmtime)
@@ -143,9 +142,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                 for f in video_files[:-2]:
                     os.remove(f)
 
+            loop_end_time = t.time()
+            print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
+            print("--------------------------------------------")
+
         else:
             t.sleep(0.2)
-
-        loop_end_time = t.time()
-        print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
-        print("--------------------------------------------")

@@ -58,7 +58,10 @@ def process_frames_batch(interpreter, input_details, output_details, new_frames,
     new_frames_normalized = new_frames.astype(np.float32) / 255.0
     current_frames_normalized = current_frames.astype(np.float32) / 255.0
 
-    # Set the tensors for batch processing
+    print(f"new_frames_normalized shape: {new_frames_normalized.shape}")
+    print(f"current_frames_normalized shape: {current_frames_normalized.shape}")
+
+    # Ensure the batch size is handled correctly by the model
     interpreter.set_tensor(input_details[0]['index'], np.expand_dims(new_frames_normalized, axis=0))
     interpreter.set_tensor(input_details[1]['index'], np.expand_dims(current_frames_normalized, axis=0))
 
@@ -110,7 +113,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         detection_end_time = t.time()
         print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
-        if 1==1:#results_1.detections and results_2.detections:
+        if results_1.detections and results_2.detections:
             print("Face detected! Capturing and blending new frames...")
             print_memory_usage("Before Capturing New Frames")
 

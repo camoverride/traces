@@ -74,7 +74,7 @@ cv2.imshow("Input Frame 2", frame_2)
 cv2.imshow("Output Frame", output_frame)
 
 # Wait until a key is pressed, then close all windows
-cv2.waitKey(0)
+cv2.waitKey(5000)
 cv2.destroyAllWindows()
 
 # Clean up

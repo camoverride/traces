@@ -26,7 +26,10 @@ def preprocess_image(frame):
     # Apply histogram equalization to enhance contrast
     equalized_frame = cv2.equalizeHist(gray_frame)
     
-    return equalized_frame
+    # Convert back to RGB format for MediaPipe compatibility
+    processed_frame = cv2.cvtColor(equalized_frame, cv2.COLOR_GRAY2RGB)
+    
+    return processed_frame
 
 
 def downscale_image(frame, scale=0.5):
@@ -52,7 +55,7 @@ def process_image(frame):
     elif brightness > 180:  # Image is too bright, apply gamma correction
         downscaled_frame = adjust_gamma(downscaled_frame, gamma=0.6)
     
-    # Step 3: Preprocess image (grayscale conversion and histogram equalization)
+    # Step 3: Preprocess image (grayscale conversion, histogram equalization, and RGB conversion)
     processed_frame = preprocess_image(downscaled_frame)
     
     return processed_frame

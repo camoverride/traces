@@ -87,6 +87,14 @@ def save_output_video(output_video_path, output_frames, fps):
     print(f"Video saved successfully to {output_video_path}.")
     print_memory_usage("After Saving Video")
 
+# Function to clean up old videos, keeping only the most recent couple
+def clean_up_old_videos(play_dir, num_to_keep=2):
+    video_files = sorted([os.path.join(play_dir, f) for f in os.listdir(play_dir) if f.endswith(".mp4")], reverse=True)
+    if len(video_files) > num_to_keep:
+        for old_video in video_files[num_to_keep:]:
+            os.remove(old_video)
+            print(f"Deleted old video: {old_video}")
+
 # Initial capture to create the first composite video
 frame_count = int(CAPTURE_DURATION * FPS)
 print_memory_usage("Before Initial Capture")
@@ -138,6 +146,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             save_output_video(new_video_filename, current_composite_frames, FPS)
             print(f"Updated video saved as {new_video_filename}")
 
+            # Clean up old videos, keeping only the most recent couple
+            clean_up_old_videos(PLAY_DIR, num_to_keep=2)
+
         else:
             print(f"No face detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             t.sleep(1)
@@ -145,3 +156,4 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         loop_end_time = t.time()
         print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
         print("--------------------------------------------")
+

@@ -51,4 +51,8 @@ def process_image(frame):
     # Step 2: Preprocess image (grayscale conversion, CLAHE, and RGB conversion)
     processed_frame = preprocess_image(frame)
     
+    # Convert back to RGB if needed
+    if len(processed_frame.shape) == 2 or processed_frame.shape[2] == 1:
+        processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_GRAY2RGB)
+    
     return processed_frame

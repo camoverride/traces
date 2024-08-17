@@ -47,13 +47,13 @@ def preload_frames(memmap_path, shape):
     print(f"Preloading completed in {end_time - start_time:.4f} seconds")
     return frames
 
-# Function to save output frames asynchronously
-def save_output_frames(output_memmap_path, memmap_shape, output_frames):
-    output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
-    for i in range(output_frames.shape[0]):
-        output_memmap[i] = output_frames[i]
-    output_memmap.flush()
-    del output_memmap
+# Function to save output video asynchronously
+def save_output_video(output_video_path, output_frames, fps):
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (WIDTH, HEIGHT))
+    for frame in output_frames:
+        out.write(frame)
+    out.release()
 
 # Function to process frames using the TPU
 def process_frames(frame_count, HEIGHT, WIDTH, interpreter, input_details, output_details, new_frames, most_recent_frames):
@@ -147,9 +147,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             blending_end_time = t.time()
             print(f"Time taken for blending frames: {blending_end_time - blending_start_time:.4f} seconds")
 
-            # Start a new thread to save the output frames
-            output_memmap_path = os.path.join(PLAY_DIR, f"{current_time}.dat")
-            save_thread = threading.Thread(target=save_output_frames, args=(output_memmap_path, memmap_shape, output_frames))
+            # Start a new thread to save the output video
+            output_video_path = os.path.join(PLAY_DIR, f"{current_time}.avi")
+            save_thread = threading.Thread(target=save_output_video, args=(output_video_path, output_frames, FPS))
             save_thread.start()
 
             # Clean up old files if necessary

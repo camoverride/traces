@@ -54,13 +54,13 @@ def capture_frames(frame_count):
 
 # Function to process and blend all frames as one batch using the TPU
 def process_frames_batch(interpreter, input_details, output_details, new_frames, current_frames):
-    # Normalize and expand dimensions for the model
+    # Normalize the frames
     new_frames_normalized = new_frames.astype(np.float32) / 255.0
     current_frames_normalized = current_frames.astype(np.float32) / 255.0
 
-    # Expand dimensions to match expected model input (batch_size, num_frames, height, width, channels)
-    new_frames_normalized = np.expand_dims(new_frames_normalized, axis=0)
-    current_frames_normalized = np.expand_dims(current_frames_normalized, axis=0)
+    # Expand dimensions to match expected model input (1, num_frames, height, width, channels)
+    new_frames_normalized = np.expand_dims(new_frames_normalized, axis=0)  # Shape: (1, num_frames, height, width, channels)
+    current_frames_normalized = np.expand_dims(current_frames_normalized, axis=0)  # Shape: (1, num_frames, height, width, channels)
 
     print(f"new_frames_normalized shape: {new_frames_normalized.shape}")
     print(f"current_frames_normalized shape: {current_frames_normalized.shape}")
@@ -73,7 +73,7 @@ def process_frames_batch(interpreter, input_details, output_details, new_frames,
     interpreter.invoke()
 
     # Get the blended output
-    blended_frames = interpreter.get_tensor(output_details[0]['index'])[0]
+    blended_frames = interpreter.get_tensor(output_details[0]['index'])[0]  # Shape: (num_frames, height, width, channels)
     return (blended_frames * 255).astype(np.uint8)
 
 # Function to save output video

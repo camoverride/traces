@@ -9,7 +9,8 @@ import mediapipe as mp
 import psutil
 from image_processing import process_image
 
-
+# Global Debug Variable
+SHOW_BB_DEBUG = True  # Set this to True to show bounding boxes
 
 # Read data from the config
 with open("config.yaml", "r") as file:
@@ -30,7 +31,6 @@ picam2.start()
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
-
 
 
 def print_memory_usage(label):
@@ -79,6 +79,13 @@ def save_output_video(output_video_path, output_frames, fps):
     out.release()
 
 
+def has_valid_detections(results, confidence_threshold):
+    if results.detections:
+        for detection in results.detections:
+            if detection.score and detection.score[0] >= confidence_threshold:
+                return True
+    return False
+
 
 # Initial capture to create the first video (not yet a composite)
 frame_count = int(CAPTURE_DURATION * FPS)
@@ -93,14 +100,7 @@ with open("_completed_video.txt", "w") as f:
     f.write(initial_video_filename)
 
 
-def has_valid_detections(results, confidence_threshold):
-    if results.detections:
-        for detection in results.detections:
-            if detection.score and detection.score[0] >= confidence_threshold:
-                return True
-    return False
-
-
+# Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
     while True:
         loop_start_time = t.time()
@@ -118,9 +118,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_2 = face_detection.process(processed_frame_2)
         detection_end_time = t.time()
 
-        print(results_1)
-        print(results_2)
-
         if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
             print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
@@ -129,6 +126,17 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_frames = capture_frames(frame_count)
             capture_end_time = t.time()
             print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
+
+            # Overlay bounding boxes on all frames if debugging is enabled
+            if SHOW_BB_DEBUG:
+                for i, frame in enumerate(new_frames):
+                    if results_1.detections:
+                        for detection in results_1.detections:
+                            mp_drawing.draw_detection(frame, detection)
+                    if results_2.detections:
+                        for detection in results_2.detections:
+                            mp_drawing.draw_detection(frame, detection)
+                    new_frames[i] = frame
 
             # Perform alpha blending on all frames
             blend_start_time = t.time()

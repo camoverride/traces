@@ -10,7 +10,6 @@ import mediapipe as mp
 from pycoral.utils.edgetpu import make_interpreter
 from pycoral.adapters import common
 
-
 # Read data from the config.
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
@@ -19,7 +18,6 @@ HEIGHT = config["HEIGHT"]
 PLAY_DIR = config["PLAY_DIR"]
 CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
 NEW_IMAGES_MEMMAP_PATH = config["NEW_IMAGES_MEMMAP_PATH"]
-ALPHA = config["ALPHA"]
 CAPTURE_DURATION = config["CAPTURE_DURATION"]
 FPS = config["FPS"]
 
@@ -34,7 +32,7 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 # Load the TFLite model for overlaying
-interpreter = make_interpreter("overlay_model.tflite")
+interpreter = make_interpreter("alpha_blending_model.tflite")
 interpreter.allocate_tensors()
 
 input_details = interpreter.get_input_details()
@@ -73,7 +71,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         # Get the time for filenaming
         current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-        if 1==1:#results_1.detections and results_2.detections:
+        if results_1.detections and results_2.detections:
             t = datetime.now().strftime("%H-%M-%S")
             print(f"{t} - Face detected! Saving frames to {NEW_IMAGES_MEMMAP_PATH}")
 
@@ -97,17 +95,10 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
-            expected_shape = input_details[0]['shape']  # Get the expected shape
-            _, target_height, target_width, _ = expected_shape  # Extract the expected height and width
-
             for frame_num in range(frame_count):
-                # Resize the input frames to match the expected size
-                resized_frame_1 = cv2.resize(new_images_memmap[frame_num], (target_width, target_height))
-                resized_frame_2 = cv2.resize(most_recent_composite_memmap[frame_num], (target_width, target_height))
-
                 # Prepare the input tensors
-                input_1 = np.expand_dims(resized_frame_1, axis=0).astype(np.float32) / 255.0
-                input_2 = np.expand_dims(resized_frame_2, axis=0).astype(np.float32) / 255.0
+                input_1 = np.expand_dims(new_images_memmap[frame_num].astype(np.float32) / 255.0, axis=0)
+                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num].astype(np.float32) / 255.0, axis=0)
 
                 interpreter.set_tensor(input_details[0]['index'], input_1)
                 interpreter.set_tensor(input_details[1]['index'], input_2)
@@ -118,12 +109,8 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
                 # Get the result
                 output_frame = interpreter.get_tensor(output_details[0]['index'])
 
-                # Debug: Print the output tensor values
-                print(f"Frame {frame_num}: Output tensor min={output_frame.min()}, max={output_frame.max()}")
-
                 # Scale the output back to 0-255 range and convert to uint8
                 output_memmap[frame_num] = (output_frame[0] * 255).astype(np.uint8)
-
 
             output_memmap.flush()
 

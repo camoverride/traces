@@ -97,10 +97,17 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
             output_memmap = np.memmap(output_memmap_path, dtype='uint8', mode='w+', shape=memmap_shape)
 
+            expected_shape = input_details[0]['shape']  # Get the expected shape
+            _, target_height, target_width, _ = expected_shape  # Extract the expected height and width
+
             for frame_num in range(frame_count):
+                # Resize the input frames to match the expected size
+                resized_frame_1 = cv2.resize(new_images_memmap[frame_num], (target_width, target_height))
+                resized_frame_2 = cv2.resize(most_recent_composite_memmap[frame_num], (target_width, target_height))
+
                 # Prepare the input tensors
-                input_1 = np.expand_dims(new_images_memmap[frame_num], axis=0).astype(np.float32) / 255.0
-                input_2 = np.expand_dims(most_recent_composite_memmap[frame_num], axis=0).astype(np.float32) / 255.0
+                input_1 = np.expand_dims(resized_frame_1, axis=0).astype(np.float32) / 255.0
+                input_2 = np.expand_dims(resized_frame_2, axis=0).astype(np.float32) / 255.0
 
                 interpreter.set_tensor(input_details[0]['index'], input_1)
                 interpreter.set_tensor(input_details[1]['index'], input_2)

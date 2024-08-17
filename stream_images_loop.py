@@ -1,55 +1,27 @@
 import os
-import subprocess
-import yaml
 import cv2
 import time
 
-# Read data from the config
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-WIDTH = config["WIDTH"]
-HEIGHT = config["HEIGHT"]
-PLAY_DIR = config["PLAY_DIR"]
-CAPTURE_DURATION = config["CAPTURE_DURATION"]
-FPS = config["FPS"]
+# Configuration
+FPS = 10  # Adjust this to match the desired FPS
+VIDEO_INFO_FILE = "./_completed_video.txt"
 
-# Set the DISPLAY environment variable for the current process
-os.environ["DISPLAY"] = ":0"
-
-# Set to fullscreen
-cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
-cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
-# Function to hide the mouse cursor
-def hide_mouse(event, x, y, flags, param):
-    cv2.setMouseCallback("window", lambda *args : None)  # No-op callback to hide cursor
-
-# Apply the function to hide the cursor
-cv2.setMouseCallback("window", hide_mouse)
-
-def get_completed_video_path():
+def get_latest_video_path():
     """
     Reads the video filename from the _completed_video.txt file.
     Returns the full path of the video if the file exists, otherwise None.
     """
-    completed_video_file = "_completed_video.txt"
-    if os.path.exists(completed_video_file):
-        with open(completed_video_file, "r") as file:
+    if os.path.exists(VIDEO_INFO_FILE):
+        with open(VIDEO_INFO_FILE, "r") as file:
             video_filename = file.read().strip()
-            if video_filename:  # Ensure the filename is not empty
-                video_path = os.path.join(PLAY_DIR, video_filename)
-                if os.path.exists(video_path):
-                    return video_path
+            if video_filename and os.path.exists(video_filename):
+                return video_filename
     return None
 
 def play_video(video_path):
     """
     Play the video in a loop until a new video is available.
     """
-    if not video_path:
-        print("No valid video to play.")
-        return None
-
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"Failed to open video: {video_path}")
@@ -66,15 +38,12 @@ def play_video(video_path):
         cv2.imshow("window", frame)
         key = cv2.waitKey(int(1000 / FPS))  # Adjust this to match the desired FPS
 
-        # Check if a new video is available every few frames
-        if frame_counter % FPS == 0:  # Check every second
-            new_video_path = get_completed_video_path()
-            if new_video_path and new_video_path != video_path:
-                print(f"New video detected: {new_video_path}")
-                cap.release()
-                return new_video_path
-
-        frame_counter += 1
+        # Check for a new video after each frame
+        new_video_path = get_latest_video_path()
+        if new_video_path and new_video_path != video_path:
+            print(f"New video detected: {new_video_path}")
+            cap.release()
+            return new_video_path
 
         if key == ord("q"):
             cap.release()
@@ -84,24 +53,22 @@ def play_video(video_path):
 def main():
     last_video_path = None
 
-    # Configure the screen properly (run only once)
-    subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
-                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # Set to fullscreen
+    cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     while True:
-        # Get the path of the completed video
-        latest_video_path = get_completed_video_path()
+        latest_video_path = get_latest_video_path()
 
         if latest_video_path and latest_video_path != last_video_path:
             last_video_path = latest_video_path
             print(f"Loading new video: {last_video_path}")
-
+        
         if last_video_path:
-            # Play the current video, checking for a new one
             last_video_path = play_video(last_video_path)
         else:
-            print("Waiting for a valid video to be completed...")
-            time.sleep(0.2)  # Wait before checking again
+            print("Waiting for a valid video to be listed...")
+            time.sleep(1)  # Wait before checking again
 
 if __name__ == "__main__":
     main()

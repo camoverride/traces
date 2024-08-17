@@ -41,8 +41,8 @@ interpreter = make_interpreter("overlay_model.tflite")
 interpreter.allocate_tensors()
 
 # Known dimensions (height, width, channels)
-height = 1080  # Update this based on your data
-width = 1920    # Update this based on your data
+height = 1920  # Update this based on your data
+width = 1080    # Update this based on your data
 channels = 3   # RGB
 
 # Load two memmap .dat files with inferred frame count

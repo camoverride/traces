@@ -89,6 +89,9 @@ initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m
 save_output_video(initial_video_filename, current_composite_frames, FPS)
 print(f"Initial video saved as {initial_video_filename}\n\n\n")
 
+with open("_completed_video.txt", "w") as f:
+    f.write(initial_video_filename)
+
 
 # Begin the main loop
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:

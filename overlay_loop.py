@@ -37,14 +37,30 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 # Function to preload frames into memory
-def preload_frames(memmap_path, shape):
-    print(f"Preloading frames from {memmap_path}...")
-    start_time = t.time()
-    memmap_data = np.memmap(memmap_path, dtype='uint8', mode='r', shape=shape)
+def preload_frames(memmap_path, height, width, channels):
+    # Get the actual file size
+    file_size = os.path.getsize(memmap_path)
+    
+    # Calculate the expected size of each frame
+    frame_size = height * width * channels
+    
+    # Calculate the number of frames based on the file size
+    num_frames = file_size // frame_size  # Integer division
+    
+    print(f"Preloading {num_frames} frames from {memmap_path}...")
+    if num_frames == 0:
+        raise ValueError(f"The file {memmap_path} seems to be empty or corrupted.")
+    
+    # Create the memmap using the dynamically calculated number of frames
+    memmap_shape = (num_frames, height, width, channels)
+    
+    # Load the frames into memory
+    memmap_data = np.memmap(memmap_path, dtype='uint8', mode='r', shape=memmap_shape)
     frames = np.array(memmap_data)
     del memmap_data  # Clean up memmap to release the file handle
-    end_time = t.time()
-    print(f"Preloading completed in {end_time - start_time:.4f} seconds")
+    
+    print(f"Preloading completed for {num_frames} frames.")
+    
     return frames
 
 # Function to save output video asynchronously

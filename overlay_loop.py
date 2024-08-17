@@ -118,13 +118,13 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_2 = face_detection.process(frame_1)
         detection_end_time = t.time()
 
-        if results_1:
-            if results_1.detections:
-                print(results_1.detections.score)
-        if results_2:
-            if results_2.detections:
-                print(results_2.detections.score)
-        print("#####################")
+        if results_1 and results_1.detections:
+            for detection in results_1.detections:
+                print(f"Detection 1 score: {detection.score[0]:.4f}")
+                
+        if results_2 and results_2.detections:
+            for detection in results_2.detections:
+                print(f"Detection 2 score: {detection.score[0]:.4f}")
 
 
         cv2.imwrite("__debug_frame.jpg", frame_1)

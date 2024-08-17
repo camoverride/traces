@@ -118,6 +118,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         results_2 = face_detection.process(processed_frame_2)
         detection_end_time = t.time()
 
+        print(results_1)
+        print(results_2)
+
         if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
             print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 

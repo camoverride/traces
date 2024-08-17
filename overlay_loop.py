@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 import time as t
 import yaml
-from picamera2 import Picamera2
 import mediapipe as mp
 import psutil
 from image_processing import process_image
@@ -23,16 +22,19 @@ CAPTURE_DURATION = 3  # Record for 3 seconds
 FPS = 15  # 15 frames per second
 ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if not set in config)
 
-# Initialize the picamera
-picam2 = Picamera2()
-# picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888", "size": (WIDTH, HEIGHT)}))
-picam2.configure(picam2.create_preview_configuration(main={"format": "RGB888"}))
-picam2.start()
+# Initialize the OpenCV capture
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+cap.set(cv2.CAP_PROP_FPS, FPS)
+
+if not cap.isOpened():
+    print("Error: Could not open camera.")
+    exit()
 
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
-
 
 def print_memory_usage(label):
     """
@@ -50,7 +52,10 @@ def capture_frames(frame_count):
     """
     frames = []
     for _ in range(frame_count):
-        frame = picam2.capture_array()
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame.")
+            break
         frames.append(frame)
 
     return np.array(frames)
@@ -107,16 +112,22 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         loop_start_time = t.time()
 
         # Capture two frames for face detection (temporal filtering)
-        frame_1 = picam2.capture_array()
-        # processed_frame_1 = process_image(frame_1)
+        ret, frame_1 = cap.read()
+        if not ret:
+            print("Error: Could not read frame 1.")
+            break
+
         t.sleep(0.5)
-        frame_2 = picam2.capture_array()
-        # processed_frame_2 = process_image(frame_2)
+
+        ret, frame_2 = cap.read()
+        if not ret:
+            print("Error: Could not read frame 2.")
+            break
 
         # Detect faces
         detection_start_time = t.time()
         results_1 = face_detection.process(frame_1)
-        results_2 = face_detection.process(frame_1)
+        results_2 = face_detection.process(frame_2)
         detection_end_time = t.time()
 
         if results_1 and results_1.detections:
@@ -183,3 +194,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
         else:
             t.sleep(0.2)
+
+# Release the OpenCV capture when done
+cap.release()

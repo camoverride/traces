@@ -9,6 +9,8 @@ from image_processing import process_image
 from picamera2 import Picamera2
 
 
+# Suppress debug
+os.environ['LIBCAMERA_LOG_LEVELS'] = '*:0'
 
 # Initialize Picamera2 once
 picam2 = Picamera2()

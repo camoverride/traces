@@ -70,9 +70,8 @@ Get the logs: `journalctl --user -u stream.service`
 
 ## To do
 
-- get latest video if it's no longer being written to (check sizes)
-- capture image in full size, resize (downsample) for face detection
-- mount, check camera angles
-- experiment with alpha
-- experiment with detection threshold
-
+- [X] mount, check camera angles
+- [ ] hide mouse
+- [ ] rotate screen on startup
+- [ ] experiment with alpha
+- [ ] experiment with detection threshold

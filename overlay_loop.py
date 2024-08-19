@@ -120,29 +120,29 @@ while True:
     results_1 = mp_face_detection.process(frame_1)
     results_2 = mp_face_detection.process(frame_2)
 
-    if results_1.detections:
-        for detection in results_1.detections:
-            detection_score_1 = detection.score
-            if DEBUG:
-                mp_drawing.draw_detection(frame_1, detection)
-            print(f"Results 1: {detection_score_1}")
+    # if results_1.detections:
+    #     for detection in results_1.detections:
+    #         detection_score_1 = detection.score
+    #         if DEBUG:
+    #             mp_drawing.draw_detection(frame_1, detection)
+    #         print(f"Results 1: {detection_score_1}")
 
-    if results_1.detections:
-        for detection in results_2.detections:
-            detection_score_2 = detection.score
-            if DEBUG:
-                mp_drawing.draw_detection(frame_2, detection)
-            print(f"Results 1: {detection_score_2}")
+    # if results_1.detections:
+    #     for detection in results_2.detections:
+    #         detection_score_2 = detection.score
+    #         if DEBUG:
+    #             mp_drawing.draw_detection(frame_2, detection)
+    #         print(f"Results 1: {detection_score_2}")
 
-    if DEBUG:
-        cv2.imshow("main debug", frame_1)
-        cv2.waitKey(int(1000 / FPS))
-        cv2.imshow("main debug", frame_2)
-        cv2.waitKey(int(1000 / FPS))
+    # if DEBUG:
+    #     cv2.imshow("main debug", frame_1)
+    #     cv2.waitKey(int(1000 / FPS))
+    #     cv2.imshow("main debug", frame_2)
+    #     cv2.waitKey(int(1000 / FPS))
 
     
-
-    if (detection_score_1 > CONFIDENCE_THRESHOLD) and (detection_score_2 > CONFIDENCE_THRESHOLD):
+    if results_1 and results_2:
+    # if (detection_score_1 > CONFIDENCE_THRESHOLD) and (detection_score_2 > CONFIDENCE_THRESHOLD):
         print("Face detected!")
 
         # Capture new frames

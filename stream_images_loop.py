@@ -1,11 +1,13 @@
 import os
-import subprocess
 import cv2
 import time
+
+
 
 # Configuration
 FPS = 10  # Adjust this to match the desired FPS
 VIDEO_INFO_FILE = "./_completed_video.txt"
+
 
 def set_display_orientation():
     """
@@ -15,8 +17,8 @@ def set_display_orientation():
     os.environ["DISPLAY"] = ":0"
 
     # Configure the screen orientation (run only once)
-    subprocess.run("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90",
-                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
+
 
 def get_latest_video_path():
     """
@@ -29,6 +31,7 @@ def get_latest_video_path():
             if video_filename and os.path.exists(video_filename):
                 return video_filename
     return None
+
 
 def play_video(video_path):
     """
@@ -61,6 +64,7 @@ def play_video(video_path):
             cv2.destroyAllWindows()
             exit(0)  # Exit the entire program
 
+
 def main():
     last_video_path = None
 
@@ -84,9 +88,8 @@ def main():
             print("Waiting for a valid video to be listed...")
             time.sleep(1)  # Wait before checking again
 
+
+
 if __name__ == "__main__":
-    # Rotate screen
-    os.environ["DISPLAY"] = ':0'
-    os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
 
     main()

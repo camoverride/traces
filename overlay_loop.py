@@ -90,11 +90,13 @@ if __name__ == "__main__":
         loop_start_time = t.time()
 
         # Capture two frames for face detection (temporal filtering) and resize them.
+        width_detection = int(WIDTH / 2)
+        height_detection = int(HEIGHT / 2)
         frame_1 = picam2.capture_array()
-        frame_1 = cv2.resize(frame_1, (640, 480))
+        frame_1 = cv2.resize(frame_1, (width_detection, height_detection))
         t.sleep(0.5)
         frame_2 = picam2.capture_array()
-        frame_2 = cv2.resize(frame_1, (640, 480))
+        frame_2 = cv2.resize(frame_1, (width_detection, height_detection))
 
         # Detect faces
         results_1 = mp_face_detection.process(frame_1)

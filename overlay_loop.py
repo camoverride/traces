@@ -54,7 +54,7 @@ def capture_frames(frame_count, face_detector):
 
         if DEBUG:
             print("displaying debug image")
-            results = face_detector.process(frame_1)
+            results = face_detector.process(frame)
             if results.detections:
                 for detection in results_1.detections:
                     mp_drawing.draw_detection(frame, detection)

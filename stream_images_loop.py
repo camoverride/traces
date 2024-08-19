@@ -9,17 +9,6 @@ FPS = 10  # Adjust this to match the desired FPS
 VIDEO_INFO_FILE = "./_completed_video.txt"
 
 
-def set_display_orientation():
-    """
-    Configures the display and sets the monitor orientation.
-    """
-    # Set the DISPLAY environment variable for the current process
-    os.environ["DISPLAY"] = ":0"
-
-    # Configure the screen orientation (run only once)
-    os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
-
-
 def get_latest_video_path():
     """
     Reads the video filename from the _completed_video.txt file.
@@ -90,7 +79,9 @@ def main():
 if __name__ == "__main__":
     # Set the display orientation and configure the screen
     print("changing the screen orientation")
-    set_display_orientation()
+    os.environ["DISPLAY"] = ":0"
+    os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
+    
     time.sleep(2)
 
     print("starting the main event loop!!")

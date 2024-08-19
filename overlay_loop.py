@@ -7,9 +7,10 @@ import yaml
 import mediapipe as mp
 import psutil
 from image_processing import process_image
+from picamera2 import Picamera2
 
-# Global Debug Variable
-SHOW_BB_DEBUG = True  # Set this to True to show bounding boxes
+
+DEBUG = True
 
 # Read data from the config
 with open("config.yaml", "r") as file:
@@ -22,15 +23,10 @@ CAPTURE_DURATION = 3  # Record for 3 seconds
 FPS = 15  # 15 frames per second
 ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if not set in config)
 
-# Initialize the OpenCV capture
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
-cap.set(cv2.CAP_PROP_FPS, FPS)
-
-if not cap.isOpened():
-    print("Error: Could not open camera.")
-    exit()
+# Initialize the Picamera2
+picam2 = Picamera2()
+picam2.configure(picam2.create_still_configuration(main={"size": (WIDTH, HEIGHT)}))
+picam2.start()
 
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
@@ -52,11 +48,18 @@ def capture_frames(frame_count):
     """
     frames = []
     for _ in range(frame_count):
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Could not read frame.")
-            break
+        frame = picam2.capture_array()
         frames.append(frame)
+
+        if DEBUG:
+            print("displaying debug image")
+            results = face_detection.process(frame_1)
+            if results.detections:
+                for detection in results_1.detections:
+                    mp_drawing.draw_detection(frame, detection)
+        cv2.imshow(frame)
+        cv2.waitKey(int(1000 / FPS))
+
 
     return np.array(frames)
 
@@ -112,17 +115,9 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
         loop_start_time = t.time()
 
         # Capture two frames for face detection (temporal filtering)
-        ret, frame_1 = cap.read()
-        if not ret:
-            print("Error: Could not read frame 1.")
-            break
-
+        frame_1 = picam2.capture_array()
         t.sleep(0.5)
-
-        ret, frame_2 = cap.read()
-        if not ret:
-            print("Error: Could not read frame 2.")
-            break
+        frame_2 = picam2.capture_array()
 
         # Detect faces
         detection_start_time = t.time()
@@ -149,17 +144,6 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
             new_frames = capture_frames(frame_count)
             capture_end_time = t.time()
             print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
-
-            # Overlay bounding boxes on all frames if debugging is enabled
-            if SHOW_BB_DEBUG:
-                for i, frame in enumerate(new_frames):
-                    if results_1.detections:
-                        for detection in results_1.detections:
-                            mp_drawing.draw_detection(frame, detection)
-                    if results_2.detections:
-                        for detection in results_2.detections:
-                            mp_drawing.draw_detection(frame, detection)
-                    new_frames[i] = frame
 
             # Perform alpha blending on all frames
             blend_start_time = t.time()

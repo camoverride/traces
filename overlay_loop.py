@@ -45,8 +45,6 @@ def capture_frames(frame_count, mp_face_detection, mp_drawing):
         frame = picam2.capture_array()
         frames.append(frame)
 
-        print("displaying debug images")
-
         if DEBUG:
             results = results = mp_face_detection.process(frame)
             if results.detections:
@@ -121,8 +119,21 @@ while True:
     results_1 = mp_face_detection.process(frame_1)
     results_2 = mp_face_detection.process(frame_2)
 
-    print(f"Results 1: {results_1}")
-    print(f"Results 2: {results_2}")
+    if results_1.detections:
+        for detection in results_1.detections:
+            mp_drawing.draw_detection(frame_1, detection)
+            print(f"Results 1: {detection.score}")
+
+    if results_2.detections:
+        for detection in results_2.detections:
+            mp_drawing.draw_detection(frame_2, detection)
+            print(f"Results 2: {detection.score}")
+
+    cv2.imshow("main debug", frame_1)
+    cv2.waitKey(int(1000 / FPS))
+    cv2.imshow("main debug", frame_2)
+    cv2.waitKey(int(1000 / FPS))
+
     
 
     if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):

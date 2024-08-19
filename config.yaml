@@ -6,4 +6,4 @@ NEW_IMAGES_MEMMAP_PATH: _current_frames.dat
 ALPHA: 0.5
 CAPTURE_DURATION: 2 # seconds
 FPS: 15
-debug: False
+debug: True

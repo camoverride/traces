@@ -70,5 +70,9 @@ Get the logs: `journalctl --user -u stream.service`
 
 ## To do
 
-- figure out camera dimensions
-- figure out why mediapipe isn't detecting faces unless they are quite close
+- get latest video if it's no longer being written to (check sizes)
+- capture image in full size, resize (downsample) for face detection
+- mount, check camera angles
+- experiment with alpha
+- experiment with detection threshold
+

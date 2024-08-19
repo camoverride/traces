@@ -22,6 +22,7 @@ CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
 CAPTURE_DURATION = 3  # Record for 3 seconds
 FPS = 15  # 15 frames per second
 ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if not set in config)
+frame_count = int(CAPTURE_DURATION * FPS)
 
 # Initialize the Picamera2
 picam2 = Picamera2()
@@ -30,20 +31,12 @@ picam2.configure(picam2.create_still_configuration(main={"size": (WIDTH, HEIGHT)
 picam2.start()
 
 # Initialize MediaPipe Face Detection
-mp_face_detection = mp.solutions.face_detection
+mp_face_detection = mp.solutions.face_detection.FaceDetection(min_detection_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
 
-def print_memory_usage(label):
-    """
-    Print memory use for debugging.
-    NOTE: this code no longer has memory leak issues!
-    """
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    print(f"[{label}] Memory Usage: RSS = {mem_info.rss / (1024 * 1024):.2f} MB")
 
 
-def capture_frames(frame_count, face_detector):
+def capture_frames(frame_count, mp_face_detection, mp_drawing):
     """
     Capture a series of frames.
     """
@@ -52,12 +45,10 @@ def capture_frames(frame_count, face_detector):
         frame = picam2.capture_array()
         frames.append(frame)
 
-
         print("displaying debug images")
 
-
         if DEBUG:
-            results = face_detector.process(frame)
+            results = results = mp_face_detection.process(frame)
             if results.detections:
                 for detection in results.detections:
                     mp_drawing.draw_detection(frame, detection)
@@ -86,7 +77,7 @@ def save_output_video(output_video_path, output_frames, fps):
     """
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'mp4v' for MP4 format
     out = cv2.VideoWriter(output_video_path, fourcc, fps, (WIDTH, HEIGHT))
-    for i, frame in enumerate(output_frames):
+    for _, frame in enumerate(output_frames):
         out.write(frame)
 
     out.release()
@@ -103,92 +94,89 @@ def has_valid_detections(results, confidence_threshold):
 
 
 
-with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
-    
-    # Initial capture to create the first video (not yet a composite)
-    frame_count = int(CAPTURE_DURATION * FPS)
-    current_composite_frames = capture_frames(frame_count, face_detection)
+# Initial capture to create the first video (not yet a composite)
+current_composite_frames = capture_frames(frame_count, mp_face_detection, mp_drawing)
 
-    # Generate a unique filename using a timestamp and save the video
-    initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
-    save_output_video(initial_video_filename, current_composite_frames, FPS)
-    print(f"Initial video saved as {initial_video_filename}\n\n\n")
+# Generate a unique filename using a timestamp and save the video
+initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
+save_output_video(initial_video_filename, current_composite_frames, FPS)
+print(f"Initial video saved as {initial_video_filename}\n\n\n")
 
-    with open("_completed_video.txt", "w") as f:
-        f.write(initial_video_filename)
-    
-    
-    # Begin the main loop
-    while True:
-        loop_start_time = t.time()
+with open("_completed_video.txt", "w") as f:
+    f.write(initial_video_filename)
 
-        # Capture two frames for face detection (temporal filtering)
-        frame_1 = picam2.capture_array()
-        t.sleep(0.5)
-        frame_2 = picam2.capture_array()
 
-        # Detect faces
-        detection_start_time = t.time()
-        results_1 = face_detection.process(frame_1)
-        results_2 = face_detection.process(frame_2)
-        detection_end_time = t.time()
 
-        if results_1 and results_1.detections:
-            for detection in results_1.detections:
-                print(f"Detection 1 score: {detection.score[0]:.4f}")
-                cv2.imshow("debug_main", frame_1)
-                cv2.waitKey(int(1000 / FPS))
-                
-        if results_2 and results_2.detections:
-            for detection in results_2.detections:
-                print(f"Detection 2 score: {detection.score[0]:.4f}")
-                cv2.imshow("debug_main", frame_2)
-                cv2.waitKey(int(1000 / FPS))
 
-        cv2.imwrite("__debug_frame.jpg", frame_1)
+# Begin the main loop
+while True:
+    loop_start_time = t.time()
 
-        if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
-            print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
+    # Capture two frames for face detection (temporal filtering)
+    frame_1 = picam2.capture_array()
+    t.sleep(0.5)
+    frame_2 = picam2.capture_array()
 
-            # Capture new frames
-            capture_start_time = t.time()
-            new_frames = capture_frames(frame_count, face_detection)
-            capture_end_time = t.time()
-            print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
+    # Detect faces
+    detection_start_time = t.time()
+    results_1 = mp_face_detection.process(frame_1)
+    results_2 = mp_face_detection.process(frame_2)
+    detection_end_time = t.time()
 
-            # Perform alpha blending on all frames
-            blend_start_time = t.time()
-            blended_frames = alpha_blend_frames(new_frames, current_composite_frames, ALPHA)
-            blend_end_time = t.time()
-            print(f"Time for face blending: {blend_end_time - blend_start_time:.4f} seconds")
+    if results_1 and results_1.detections:
+        for detection in results_1.detections:
+            print(f"Detection 1 score: {detection.score[0]:.4f}")
+            cv2.imshow("debug_main", frame_1)
+            cv2.waitKey(int(1000 / FPS))
+            
+    if results_2 and results_2.detections:
+        for detection in results_2.detections:
+            print(f"Detection 2 score: {detection.score[0]:.4f}")
+            cv2.imshow("debug_main", frame_2)
+            cv2.waitKey(int(1000 / FPS))
 
-            # Update the current composite frames
-            current_composite_frames = blended_frames
+    # cv2.imwrite("__debug_frame.jpg", frame_1)
 
-            # Generate a unique filename using a timestamp
-            video_save_start_time = t.time()
-            new_video_filename = os.path.join(PLAY_DIR, f"_play_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
-            # Save the new composite as the play video
-            save_output_video(new_video_filename, current_composite_frames, FPS)
-            video_save_end_time = t.time()
-            print(f"Time for saving video: {video_save_end_time - video_save_start_time:.4f}")
-            print(f"Updated video saved as {new_video_filename}")
+    if results_1 and results_2:
+        print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
-            with open("_completed_video.txt", "w") as f:
-                f.write(new_video_filename)
+        # Capture new frames
+        capture_start_time = t.time()
+        new_frames = capture_frames(frame_count, mp_face_detection, mp_drawing)
+        capture_end_time = t.time()
+        print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
 
-            # Clean up old videos, keeping only the most recent two
-            video_files = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], key=os.path.getmtime)
-            if len(video_files) > 2:
-                for f in video_files[:-2]:
-                    os.remove(f)
+        # Perform alpha blending on all frames
+        blend_start_time = t.time()
+        blended_frames = alpha_blend_frames(new_frames, current_composite_frames, ALPHA)
+        blend_end_time = t.time()
+        print(f"Time for face blending: {blend_end_time - blend_start_time:.4f} seconds")
 
-            loop_end_time = t.time()
-            print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
-            print("--------------------------------------------")
+        # Update the current composite frames
+        current_composite_frames = blended_frames
 
-        else:
-            t.sleep(0.2)
+        # Generate a unique filename using a timestamp
+        video_save_start_time = t.time()
+        new_video_filename = os.path.join(PLAY_DIR, f"_play_video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
+        # Save the new composite as the play video
+        save_output_video(new_video_filename, current_composite_frames, FPS)
+        video_save_end_time = t.time()
+        print(f"Time for saving video: {video_save_end_time - video_save_start_time:.4f}")
+        print(f"Updated video saved as {new_video_filename}")
 
-# Release the OpenCV capture when done
-cap.release()
+        with open("_completed_video.txt", "w") as f:
+            f.write(new_video_filename)
+
+        # Clean up old videos, keeping only the most recent two
+        video_files = sorted([os.path.join(PLAY_DIR, f) for f in os.listdir(PLAY_DIR)], key=os.path.getmtime)
+        if len(video_files) > 2:
+            for f in video_files[:-2]:
+                os.remove(f)
+
+        loop_end_time = t.time()
+        print(f"Loop iteration completed in {loop_end_time - loop_start_time:.4f} seconds")
+        print("--------------------------------------------")
+
+
+    else:
+        cv2.waitKey(int(1000 / FPS))

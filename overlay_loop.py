@@ -137,7 +137,7 @@ while True:
 
     # cv2.imwrite("__debug_frame.jpg", frame_1)
 
-    if results_1 and results_2:
+    if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
         print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
 
         # Capture new frames

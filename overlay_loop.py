@@ -118,27 +118,15 @@ while True:
     frame_2 = picam2.capture_array()
 
     # Detect faces
-    detection_start_time = t.time()
     results_1 = mp_face_detection.process(frame_1)
     results_2 = mp_face_detection.process(frame_2)
-    detection_end_time = t.time()
 
-    if results_1 and results_1.detections:
-        for detection in results_1.detections:
-            print(f"Detection 1 score: {detection.score[0]:.4f}")
-            cv2.imshow("debug_main", frame_1)
-            cv2.waitKey(int(1000 / FPS))
-            
-    if results_2 and results_2.detections:
-        for detection in results_2.detections:
-            print(f"Detection 2 score: {detection.score[0]:.4f}")
-            cv2.imshow("debug_main", frame_2)
-            cv2.waitKey(int(1000 / FPS))
-
-    # cv2.imwrite("__debug_frame.jpg", frame_1)
+    print(f"Results 1: {results_1}")
+    print(f"Results 2: {results_2}")
+    
 
     if has_valid_detections(results_1, CONFIDENCE_THRESHOLD) and has_valid_detections(results_2, CONFIDENCE_THRESHOLD):
-        print(f"Time taken for face detection: {detection_end_time - detection_start_time:.4f} seconds")
+        print("Face detected!")
 
         # Capture new frames
         capture_start_time = t.time()

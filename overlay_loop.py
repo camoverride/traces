@@ -124,12 +124,14 @@ while True:
             if DEBUG:
                 mp_drawing.draw_detection(frame_2, detection)
                 print(f"Results 2: {detection_score_2}")
+    
 
     if DEBUG:
         cv2.imshow("main debug", frame_1)
         cv2.waitKey(int(1000 / FPS))
         cv2.imshow("main debug", frame_2)
         cv2.waitKey(int(1000 / FPS))
+        print("***********")
 
     
     if (detection_score_1 > CONFIDENCE_THRESHOLD) and (detection_score_2 > CONFIDENCE_THRESHOLD):

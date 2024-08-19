@@ -108,6 +108,7 @@ with open("_completed_video.txt", "w") as f:
 
 # Begin the main loop
 while True:
+    detection_score_1, detection_score_2 = 0, 0
     loop_start_time = t.time()
 
     # Capture two frames for face detection (temporal filtering)

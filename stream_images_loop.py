@@ -68,9 +68,6 @@ def play_video(video_path):
 def main():
     last_video_path = None
 
-    # Set the display orientation and configure the screen
-    set_display_orientation()
-
     # Set to fullscreen
     cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -91,5 +88,10 @@ def main():
 
 
 if __name__ == "__main__":
+    # Set the display orientation and configure the screen
+    print("changing the screen orientation")
+    set_display_orientation()
+    time.sleep(2)
 
+    print("starting the main event loop!!")
     main()

@@ -7,6 +7,10 @@ Displayed on an HDMI monitor inside picture frame. RPi 4B with PiCamera.
 
 ## Setup
 
+Hide the mouse:
+
+- `sudo apt-get install unclutter`
+
 Python requirements:
 - `python -m venv --system-site-packages .venv` (system-site-packages so we get the `picamera` package.)
 - `source .venv/bin/activate`

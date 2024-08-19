@@ -53,10 +53,14 @@ def save_output_video(output_video_path, output_frames, fps, width, height):
     out.release()
 
 if __name__ == "__main__":
+    # Change the screen orientation
     print("changing the screen orientation")
     os.environ["DISPLAY"] = ":0"
     os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
 
+    # Hide the mouse
+    # Hide the mouse
+    os.system("unclutter -idle 0 &")
 
     # Read data from the config
     with open("config.yaml", "r") as file:

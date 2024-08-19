@@ -43,7 +43,7 @@ def print_memory_usage(label):
     print(f"[{label}] Memory Usage: RSS = {mem_info.rss / (1024 * 1024):.2f} MB")
 
 
-def capture_frames(frame_count):
+def capture_frames(frame_count, face_detector):
     """
     Capture a series of frames.
     """
@@ -54,7 +54,7 @@ def capture_frames(frame_count):
 
         if DEBUG:
             print("displaying debug image")
-            results = face_detection.process(frame_1)
+            results = face_detector.process(frame_1)
             if results.detections:
                 for detection in results_1.detections:
                     mp_drawing.draw_detection(frame, detection)
@@ -97,21 +97,25 @@ def has_valid_detections(results, confidence_threshold):
     return False
 
 
-# Initial capture to create the first video (not yet a composite)
-frame_count = int(CAPTURE_DURATION * FPS)
-current_composite_frames = capture_frames(frame_count)
-
-# Generate a unique filename using a timestamp and save the video
-initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
-save_output_video(initial_video_filename, current_composite_frames, FPS)
-print(f"Initial video saved as {initial_video_filename}\n\n\n")
-
-with open("_completed_video.txt", "w") as f:
-    f.write(initial_video_filename)
 
 
-# Begin the main loop
+
 with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHOLD) as face_detection:
+    
+    # Initial capture to create the first video (not yet a composite)
+    frame_count = int(CAPTURE_DURATION * FPS)
+    current_composite_frames = capture_frames(frame_count, face_detection)
+
+    # Generate a unique filename using a timestamp and save the video
+    initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
+    save_output_video(initial_video_filename, current_composite_frames, FPS)
+    print(f"Initial video saved as {initial_video_filename}\n\n\n")
+
+    with open("_completed_video.txt", "w") as f:
+        f.write(initial_video_filename)
+    
+    
+    # Begin the main loop
     while True:
         loop_start_time = t.time()
 
@@ -142,7 +146,7 @@ with mp_face_detection.FaceDetection(min_detection_confidence=CONFIDENCE_THRESHO
 
             # Capture new frames
             capture_start_time = t.time()
-            new_frames = capture_frames(frame_count)
+            new_frames = capture_frames(frame_count, face_detection)
             capture_end_time = t.time()
             print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
 

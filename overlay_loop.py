@@ -59,7 +59,7 @@ def capture_frames(frame_count, face_detector):
         if DEBUG:
             results = face_detector.process(frame)
             if results.detections:
-                for detection in results_1.detections:
+                for detection in results.detections:
                     mp_drawing.draw_detection(frame, detection)
         cv2.imshow("debug", frame)
         cv2.waitKey(int(1000 / FPS))

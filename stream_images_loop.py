@@ -85,4 +85,8 @@ def main():
             time.sleep(1)  # Wait before checking again
 
 if __name__ == "__main__":
+    # Rotate screen
+    os.environ["DISPLAY"] = ':0'
+    os.system("WAYLAND_DISPLAY=wayland-1 wlr-randr --output HDMI-A-1 --transform 90")
+
     main()

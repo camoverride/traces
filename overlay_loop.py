@@ -116,14 +116,14 @@ while True:
             detection_score_1 = detection.score[0]
             if DEBUG:
                 mp_drawing.draw_detection(frame_1, detection)
-            print(f"Results 1: {detection_score_1}")
+                print(f"Results 1: {detection_score_1}")
 
     if results_2.detections:
         for detection in results_2.detections:
             detection_score_2 = detection.score[0]
             if DEBUG:
                 mp_drawing.draw_detection(frame_2, detection)
-            print(f"Results 1: {detection_score_2}")
+                print(f"Results 2: {detection_score_2}")
 
     if DEBUG:
         cv2.imshow("main debug", frame_1)

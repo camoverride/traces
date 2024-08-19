@@ -9,6 +9,8 @@ from image_processing import process_image
 from picamera2 import Picamera2
 
 
+
+# Suppress picamera/libcamera debug
 Picamera2.set_logging(Picamera2.ERROR)
 os.environ["LIBCAMERA_LOG_LEVELS"] = "3"
 

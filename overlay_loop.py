@@ -113,14 +113,14 @@ while True:
 
     if results_1.detections:
         for detection in results_1.detections:
-            detection_score_1 = detection.score
+            detection_score_1 = detection.score[0]
             if DEBUG:
                 mp_drawing.draw_detection(frame_1, detection)
             print(f"Results 1: {detection_score_1}")
 
     if results_2.detections:
         for detection in results_2.detections:
-            detection_score_2 = detection.score
+            detection_score_2 = detection.score[0]
             if DEBUG:
                 mp_drawing.draw_detection(frame_2, detection)
             print(f"Results 1: {detection_score_2}")

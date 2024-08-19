@@ -10,38 +10,19 @@ from picamera2 import Picamera2
 
 
 
-# Read data from the config
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-DEBUG = config["debug"]
-WIDTH = config["WIDTH"]
-HEIGHT = config["HEIGHT"]
-PLAY_DIR = config["PLAY_DIR"]
-CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
-CAPTURE_DURATION = 3  # Record for 3 seconds
-FPS = 15  # 15 frames per second
-ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if not set in config)
-frame_count = int(CAPTURE_DURATION * FPS)
-
-# Initialize the Picamera2
-picam2 = Picamera2()
-picam2.configure(picam2.create_still_configuration(main={"size": (WIDTH, HEIGHT), "format": "RGB888"}))
-picam2.start()
-
-# Initialize MediaPipe Face Detection
-mp_face_detection = mp.solutions.face_detection.FaceDetection(min_detection_confidence=0.5)
-mp_drawing = mp.solutions.drawing_utils
-
-
-
-def capture_frames(frame_count):
+def capture_frames(frame_count, width, height):
     """
     Capture a series of frames.
     """
+    picam2 = Picamera2()
+    picam2.configure(picam2.create_still_configuration(main={"size": (width, height), "format": "RGB888"}))
+    picam2.start()
     frames = []
     for _ in range(frame_count):
         frame = picam2.capture_array()
         frames.append(frame)
+
+    picam2.stop()
 
     return np.array(frames)
 
@@ -72,8 +53,25 @@ def save_output_video(output_video_path, output_frames, fps):
 
 
 if __name__ == "__main__":
+    # Read data from the config
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    DEBUG = config["debug"]
+    WIDTH = config["WIDTH"]
+    HEIGHT = config["HEIGHT"]
+    PLAY_DIR = config["PLAY_DIR"]
+    CONFIDENCE_THRESHOLD = config["CONFIDENCE_THRESHOLD"]
+    CAPTURE_DURATION = 3  # Record for 3 seconds
+    FPS = 15  # 15 frames per second
+    ALPHA = config.get("ALPHA", 0.5)  # Alpha value for blending (default to 0.5 if not set in config)
+    frame_count = int(CAPTURE_DURATION * FPS)
+
+    # Initialize MediaPipe Face Detection
+    mp_face_detection = mp.solutions.face_detection.FaceDetection(min_detection_confidence=0.5)
+    mp_drawing = mp.solutions.drawing_utils
+
     # Initial capture to create the first video (not yet a composite)
-    current_composite_frames = capture_frames(frame_count)
+    current_composite_frames = capture_frames(frame_count, WIDTH, HEIGHT)
 
     # Generate a unique filename using a timestamp and save the video
     initial_video_filename = os.path.join(PLAY_DIR, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
@@ -86,6 +84,11 @@ if __name__ == "__main__":
 
     # Begin the main loop
     while True:
+        # Initialize the Picamera2 with face detection resolution (640 x 480)
+        picam2 = Picamera2()
+        picam2.configure(picam2.create_still_configuration(main={"size": (640, 480), "format": "RGB888"}))
+        picam2.start()
+
         detection_score_1, detection_score_2 = 0, 0
         loop_start_time = t.time()
 
@@ -97,6 +100,9 @@ if __name__ == "__main__":
         t.sleep(0.5)
         frame_2 = picam2.capture_array()
         frame_2 = cv2.resize(frame_1, (width_detection, height_detection))
+
+        # Stop the picamera so that the following code can capture in the frame resolution.
+        picam2.stop()
 
         # Detect faces
         results_1 = mp_face_detection.process(frame_1)
@@ -133,7 +139,7 @@ if __name__ == "__main__":
 
             # Capture new frames
             capture_start_time = t.time()
-            new_frames = capture_frames(frame_count)
+            new_frames = capture_frames(frame_count, WIDTH, HEIGHT)
             capture_end_time = t.time()
             print(f"Time for frame capture: {capture_end_time - capture_start_time:.4f}")
 

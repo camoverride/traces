@@ -10,7 +10,7 @@ from picamera2 import Picamera2
 
 
 # Suppress debug
-os.environ['LIBCAMERA_LOG_LEVELS'] = '*:1'
+os.environ['LIBCAMERA_LOG_LEVELS'] = 'RPi:1,Camera:1,vc4:1,Unicam:1'
 
 # Initialize Picamera2 once
 picam2 = Picamera2()

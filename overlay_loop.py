@@ -45,15 +45,6 @@ def capture_frames(frame_count, mp_face_detection, mp_drawing):
         frame = picam2.capture_array()
         frames.append(frame)
 
-        if DEBUG:
-            results = results = mp_face_detection.process(frame)
-            if results.detections:
-                for detection in results.detections:
-                    mp_drawing.draw_detection(frame, detection)
-        cv2.imshow("debug", frame)
-        cv2.waitKey(int(1000 / FPS))
-
-
     return np.array(frames)
 
 

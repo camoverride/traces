@@ -10,7 +10,7 @@ from image_processing import process_image
 from picamera2 import Picamera2
 
 
-DEBUG = True
+DEBUG = False
 
 # Read data from the config
 with open("config.yaml", "r") as file:

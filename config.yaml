@@ -1,8 +1,11 @@
+# Screen rotation
+rotation: 270
+
 # The duration of each new recording (seconds)
 recording_duration: 5
 
 # The amount that the new video contributes to the collage
-alpha: 04
+alpha: 0.6
 
 # FPS. NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
 fps: 30

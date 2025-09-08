@@ -5,7 +5,12 @@ rotation: 270
 recording_duration: 5
 
 # The amount that the new video contributes to the collage
-alpha: 0.6
+alpha: 0.8
+
+# Smoothing parameters for masks.
+blur_size: 11
+min_area: 500
+temporal_alpha: 0.8
 
 # FPS. NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
 fps: 30

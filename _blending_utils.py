@@ -344,7 +344,7 @@ class ThreadedFaceBlender:
                 frame = frames_copy[index]
 
                 # Display current frame.
-                cv2.imshow("Blended Video", frame)
+                cv2.imshow("Display Image", frame)
 
                 # Wait for key press to maintain FPS; quit if 'q' pressed.
                 key = cv2.waitKey(int(1000 / self.fps))

@@ -2,7 +2,7 @@ import cv2
 import logging
 import os
 import yaml
-from _screen_utils import get_os_name, rotate_screen
+from _screen_utils import get_os_name, set_up_display, rotate_screen
 from _blending_utils import ThreadedFaceBlender
 
 
@@ -27,6 +27,9 @@ if __name__ == "__main__":
 
     # Get the name of the OS. Should be either "raspbian", "ubuntu", or "macos".
     os_name = get_os_name()
+
+    # Set up the display to show images.
+    set_up_display(operating_system=os_name)
 
     # Rotate the screen.
     rotate_screen(

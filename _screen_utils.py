@@ -7,8 +7,6 @@ import time
 
 
 
-
-
 def set_up_display(operating_system : str) -> None:
     """
     Sets the OpenCV display canvas to be fullscreen by creating a

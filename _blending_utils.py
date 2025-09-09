@@ -173,15 +173,17 @@ class ThreadedFaceBlender:
         # cv2 video capture.
         self.cap = cv2.VideoCapture(0)
 
-        # Force MJPG format for full 1080p at 30fps
-        # self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # Force MJPG first
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+
+        # Now set resolution AFTER forcing MJPG
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         if not self.cap.isOpened():
             raise RuntimeError("Cannot open webcam")
         
-        # Verify resolution
+        # Verify resolution.
         actual_width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print(f"Requested 1920x1080, got {actual_width}x{actual_height}")

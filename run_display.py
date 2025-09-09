@@ -37,13 +37,13 @@ if __name__ == "__main__":
     os.system("unclutter -idle 0 &")
 
     # Make the display fullscreen.
-    cv2.namedWindow(
-        "Blended Video",
-        cv2.WINDOW_NORMAL)
-    cv2.setWindowProperty(
-        "Blended Video",
-        cv2.WND_PROP_FULLSCREEN,
-        cv2.WINDOW_FULLSCREEN)
+    # cv2.namedWindow(
+    #     "Display Image",
+    #     cv2.WINDOW_NORMAL)
+    # cv2.setWindowProperty(
+    #     "Display Image",
+    #     cv2.WND_PROP_FULLSCREEN,
+    #     cv2.WINDOW_FULLSCREEN)
 
     # Initialize blender object.
     blender = ThreadedFaceBlender(

@@ -172,6 +172,11 @@ class ThreadedFaceBlender:
 
         # cv2 video capture.
         self.cap = cv2.VideoCapture(0)
+
+        # Set resolution to 1080p.
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
         if not self.cap.isOpened():
             raise RuntimeError("Cannot open webcam")
 

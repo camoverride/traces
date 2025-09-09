@@ -179,6 +179,11 @@ class ThreadedFaceBlender:
 
         if not self.cap.isOpened():
             raise RuntimeError("Cannot open webcam")
+        
+        # Verify resolution
+        actual_width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"Requested 1920x1080, got {actual_width}x{actual_height}")
 
         # Mediapipe face detection.
         self.mp_face_detection = mp.solutions.face_detection  # type: ignore

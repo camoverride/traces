@@ -173,17 +173,17 @@ class ThreadedFaceBlender:
         # cv2 video capture.
         self.cap = cv2.VideoCapture(0)
 
-        # Set resolution to 1080p.
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # # Set resolution to 1080p.
+        # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
         if not self.cap.isOpened():
             raise RuntimeError("Cannot open webcam")
         
         # Verify resolution
-        actual_width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        print(f"Requested 1920x1080, got {actual_width}x{actual_height}")
+        # actual_width  = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        # actual_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # print(f"Requested 1920x1080, got {actual_width}x{actual_height}")
 
         # Mediapipe face detection.
         self.mp_face_detection = mp.solutions.face_detection  # type: ignore

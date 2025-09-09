@@ -174,7 +174,7 @@ class ThreadedFaceBlender:
         self.cap = cv2.VideoCapture(0)
 
         # Force MJPG first
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))  # type: ignore
 
         # Now set resolution AFTER forcing MJPG
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)

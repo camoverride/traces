@@ -19,6 +19,8 @@ Ubuntu (production):
 - `python3 -m venv .venv`
 - `source .venv/bin/activate`
 - `python3 -m pip install -r requirements_ubuntu.txt`
+- `curl https://gitlab.com/Oschowa/gnome-randr/-/raw/master/gnome-randr.py -o gnome-randr.py`
+- `chmod +x gnome-randr.py`
 <!-- - `python3 -m pip install git+https://github.com/ageitgey/face_recognition_models` -->
 
 

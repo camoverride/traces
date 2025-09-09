@@ -2,6 +2,7 @@ import cv2
 import logging
 import os
 import yaml
+from _screen_utils import get_os_name, rotate_screen
 from _blending_utils import ThreadedFaceBlender
 
 
@@ -24,9 +25,13 @@ if __name__ == "__main__":
     # Set the display.
     os.environ["DISPLAY"] = ":0"
 
+    # Get the name of the OS. Should be either "raspbian", "ubuntu", or "macos".
+    os_name = get_os_name()
+
     # Rotate the screen.
-    # NOTE: this works for Pi only.
-    os.system(f"wlr-randr --output HDMI-A-1 --transform {config['rotation']}")
+    rotate_screen(
+        operating_system=os_name,
+        rotation=config["rotation"])
 
     # Hide the cursor.
     os.system("unclutter -idle 0 &")

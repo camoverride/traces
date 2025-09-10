@@ -2,7 +2,7 @@
 rotation: normal
 
 # Camera rotation. Right, left, normal.
-camera_rotation: right
+camera_rotation: left
 
 # The duration of each new recording (seconds)
 recording_duration: 5

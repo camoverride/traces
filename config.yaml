@@ -1,5 +1,5 @@
 # Screen rotation
-rotation: left
+rotation: normal
 
 # Camera rotation. Right, left, normal.
 camera_rotation: right

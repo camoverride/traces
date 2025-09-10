@@ -1,6 +1,9 @@
 # Screen rotation
 rotation: left
 
+# Camera rotation. Right, left, normal.
+camera_rotation: right
+
 # The duration of each new recording (seconds)
 recording_duration: 5
 

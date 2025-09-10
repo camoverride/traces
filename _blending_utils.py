@@ -129,6 +129,7 @@ class ThreadedFaceBlender:
     """
     def __init__(
             self,
+            frame_rotation,
             record_seconds,
             alpha,
             fps,
@@ -140,6 +141,8 @@ class ThreadedFaceBlender:
 
         Parameters
         ----------
+        frame_rotation : str
+            The camera might be rotated. Rotate the frame accordingly.
         record_seconds : int
             Duration in seconds to record new video segments when a face is detected.
         alpha : float
@@ -154,6 +157,7 @@ class ThreadedFaceBlender:
             Temporal EMA smoothing factor for masks.
         """
         # Add class attributes.
+        self.frame_rotation = frame_rotation
         self.record_seconds = record_seconds
         self.alpha = alpha
         self.fps = fps
@@ -285,6 +289,14 @@ class ThreadedFaceBlender:
             ret, frame = self.cap.read()
             if not ret:
                 continue
+
+            # Rotate the image, as the camera itself might be rotated.
+            if self.frame_rotation == "right":
+                frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+            elif self.frame_rotation == "left":
+                frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            elif self.frame_rotation == "normal":
+                pass
 
             # Check if a face is detected.
             if self.detect_face(frame):

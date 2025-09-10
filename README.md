@@ -18,9 +18,10 @@ Ubuntu (production):
 
 - `python3 -m venv .venv`
 - `source .venv/bin/activate`
-- `python3 -m pip install -r requirements_ubuntu.txt`
+- `python3 -m pip install -r requirements.txt`
 - `curl https://gitlab.com/Oschowa/gnome-randr/-/raw/master/gnome-randr.py -o gnome-randr.py`
 - `chmod +x gnome-randr.py`
+- `sudo apt update && sudo apt install -y build-essential libdbus-1-dev python3-dev libglib2.0-dev`
 - `pip install dbus-python`
 <!-- - `python3 -m pip install git+https://github.com/ageitgey/face_recognition_models` -->
 

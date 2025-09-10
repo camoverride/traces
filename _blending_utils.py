@@ -311,6 +311,14 @@ class ThreadedFaceBlender:
                     if not ret:
                         break
 
+                    # Rotate the image, as the camera itself might be rotated.
+                    if self.frame_rotation == "right":
+                        f = cv2.rotate(f, cv2.ROTATE_90_CLOCKWISE)
+                    elif self.frame_rotation == "left":
+                        f = cv2.rotate(f, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                    elif self.frame_rotation == "normal":
+                        pass
+
                     # Convert frame to RGB for MediaPipe segmentation.
                     rgb_f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
                     seg_results = self.selfie_segmentation.process(rgb_f)

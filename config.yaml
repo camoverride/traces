@@ -1,5 +1,5 @@
 # Screen rotation
-rotation: normal
+rotation: left
 
 # The duration of each new recording (seconds)
 recording_duration: 5

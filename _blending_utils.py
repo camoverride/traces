@@ -173,16 +173,22 @@ class ThreadedFaceBlender:
             mp.solutions.selfie_segmentation  # type: ignore
         self.selfie_segmentation = \
             self.mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
+        
+        # NOTE: hard-coded values for Logitech Brio.
+        device_index = 0
+        max_width = 4096
+        max_height = 2160
 
         # cv2 video capture.
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(device_index)
 
-        # Force MJPG first
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))  # type: ignore
+        # Set resolution
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, max_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, max_height)
 
-        # Now set resolution AFTER forcing MJPG
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # Set MJPG codec
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')  # type: ignore
+        self.cap.set(cv2.CAP_PROP_FOURCC, fourcc)
 
         if not self.cap.isOpened():
             raise RuntimeError("Cannot open webcam")

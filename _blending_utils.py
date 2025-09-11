@@ -333,11 +333,15 @@ class ThreadedFaceBlender:
                     elif self.frame_rotation == "normal":
                         pass
 
-                    # Resize to correct monitor dimensions.
-                    f = cv2.resize(f, (self.monitor_width, self.monitor_height))
+                    # Resize for mediapipe processing, downscale to width=320.
+                    mediapipe_width = 320
+                    f_h, f_w = f.shape[:2]
+                    scale = mediapipe_width / f_w
+                    new_height = int(f_h * scale)
+                    mediapipe_f = cv2.resize(f, (mediapipe_width, new_height))
 
                     # Convert frame to RGB for MediaPipe segmentation.
-                    rgb_f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+                    rgb_f = cv2.cvtColor(mediapipe_f, cv2.COLOR_BGR2RGB)
 
                     # Perform image segmentation.
                     seg_results = self.selfie_segmentation.process(rgb_f)
@@ -345,6 +349,13 @@ class ThreadedFaceBlender:
                     # Get mask and binarize.
                     mask = seg_results.segmentation_mask  # float32, 0..1
                     mask = (mask > 0.5).astype(np.float32)  # binary mask
+
+                    # Resize display frame correct monitor dimensions.
+                    f = cv2.resize(f, (self.monitor_width, self.monitor_height))
+
+                    # Resize mask to correct monitor dimensions.
+                    # mask = cv2.resize(mask, (f_w, f_h))
+                    mask = cv2.resize(mask, (self.monitor_width, self.monitor_height))
 
                     # Append the results.
                     new_frames.append(f)
@@ -356,10 +367,12 @@ class ThreadedFaceBlender:
                 # Smooth recorded masks.
                 smoothed_masks = self.smoother.smooth_masks(masks)
 
+                start_time = time.time()
                 # Blend new video segment into shared buffer.
                 self.blend(new_frames, smoothed_masks)
+                end_time = time.time()
 
-                print("Blending complete. Now looping the blended video.")
+                print(f"Blending complete in {end_time - start_time:.3f}. Now looping the blended video.")
 
             # Small sleep to avoid busy waiting.
             time.sleep(0.01)

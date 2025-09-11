@@ -7,6 +7,10 @@ camera_rotation: left
 # The duration of each new recording (seconds)
 recording_duration: 5
 
+# Monitor dimensions
+monitor_height: 3840
+monitor_width: 2160
+
 # The amount that the new video contributes to the collage
 alpha: 0.8
 

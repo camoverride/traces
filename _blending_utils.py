@@ -129,6 +129,8 @@ class ThreadedFaceBlender:
     """
     def __init__(
             self,
+            monitor_width,
+            monitor_height,
             frame_rotation,
             record_seconds,
             alpha,
@@ -141,6 +143,10 @@ class ThreadedFaceBlender:
 
         Parameters
         ----------
+        monitor_width : int
+            The width of the monitor (after physical rotation)
+        monitor_height : int
+            The height of the monitor (after physical rotation)
         frame_rotation : str
             The camera might be rotated. Rotate the frame accordingly.
         record_seconds : int
@@ -157,6 +163,8 @@ class ThreadedFaceBlender:
             Temporal EMA smoothing factor for masks.
         """
         # Add class attributes.
+        self.monitor_height = monitor_height
+        self.monitor_width = monitor_width
         self.frame_rotation = frame_rotation
         self.record_seconds = record_seconds
         self.alpha = alpha
@@ -327,6 +335,11 @@ class ThreadedFaceBlender:
 
                     # Convert frame to RGB for MediaPipe segmentation.
                     rgb_f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+
+                    # Resize to correct monitor dimensions.
+                    rgb_f = cv2.resize(rgb_f, (self.monitor_width, self.monitor_height))
+
+                    # Perform image segmentation.
                     seg_results = self.selfie_segmentation.process(rgb_f)
 
                     # Get mask and binarize.

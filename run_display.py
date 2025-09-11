@@ -1,4 +1,3 @@
-import cv2
 import logging
 import os
 import yaml
@@ -50,6 +49,8 @@ if __name__ == "__main__":
 
     # Initialize blender object.
     blender = ThreadedFaceBlender(
+        monitor_width=config["monitor_width"],
+        monitor_height=config["monitor_height"],
         frame_rotation=config["camera_rotation"],
         record_seconds=config["recording_duration"],
         alpha=config["temporal_alpha"],

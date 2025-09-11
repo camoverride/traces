@@ -16,4 +16,4 @@ min_area: 500
 temporal_alpha: 0.8
 
 # FPS. NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
-fps: 5
+fps: 15

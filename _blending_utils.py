@@ -333,11 +333,11 @@ class ThreadedFaceBlender:
                     elif self.frame_rotation == "normal":
                         pass
 
+                    # Resize to correct monitor dimensions.
+                    f = cv2.resize(f, (self.monitor_width, self.monitor_height))
+
                     # Convert frame to RGB for MediaPipe segmentation.
                     rgb_f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
-
-                    # Resize to correct monitor dimensions.
-                    rgb_f = cv2.resize(rgb_f, (self.monitor_width, self.monitor_height))
 
                     # Perform image segmentation.
                     seg_results = self.selfie_segmentation.process(rgb_f)
@@ -346,6 +346,7 @@ class ThreadedFaceBlender:
                     mask = seg_results.segmentation_mask  # float32, 0..1
                     mask = (mask > 0.5).astype(np.float32)  # binary mask
 
+                    # Append the results.
                     new_frames.append(f)
                     masks.append(mask)
 

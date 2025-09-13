@@ -1,8 +1,10 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import random
 import threading
 import time
+from typing import Optional
 
 
 
@@ -137,7 +139,9 @@ class ThreadedFaceBlender:
             fps,
             blur_size,
             min_area,
-            temporal_alpha):
+            temporal_alpha,
+            grid_height : Optional[int],
+            grid_width : Optional[int]):
         """
         Initialize the threaded face blender.
 
@@ -161,6 +165,10 @@ class ThreadedFaceBlender:
             Minimum connected component area for mask cleaning.
         temporal_alpha : float
             Temporal EMA smoothing factor for masks.
+        grid_height : Optional[int]
+            Number of boxes on the height. If None, then grid is disabled.
+        grid_width : Optional[int]
+            Number of boxes on the width. If None, then grid is disabled.
         """
         # Add class attributes.
         self.monitor_height = monitor_height
@@ -169,6 +177,10 @@ class ThreadedFaceBlender:
         self.record_seconds = record_seconds
         self.alpha = alpha
         self.fps = fps
+        self.grid_height = grid_height
+        self.grid_width = grid_width
+        self.grid_enabled = grid_height is not None and grid_width is not None
+        self.used_grid_cells = set()
 
         # Initialize smoother for mask processing.
         self.smoother = MaskSmoother(
@@ -248,42 +260,110 @@ class ThreadedFaceBlender:
         masks: list[np.ndarray]):
         """
         Blend new frames into current frames using masks.
-
-        Each pixel is blended as:
-            blended = current * (1 - mask * alpha) + new * (mask * alpha)
-
-        Parameters
-        ----------
-        new_frames : list[np.ndarray]
-            A list of image frames.
-        masks : list[np.ndarray]
-            A list of image masks.
+        
+        If grid is enabled, place the entire new video in a random grid box.
+        For first-time grid assignments, skip segmentation completely.
         """
         if self.current_frames:
-            # Compute minimum length to avoid index errors if lists differ.
             min_len = min(len(self.current_frames), len(new_frames))
             blended_frames = []
-    
+            
+            # Choose random grid position once for the entire video segment
+            if self.grid_enabled and self.grid_height and self.grid_width:
+                grid_row = random.randint(0, self.grid_height - 1)
+                grid_col = random.randint(0, self.grid_width - 1)
+                
+                # Check if this is the first time using this grid cell
+                is_first_assignment = (grid_row, grid_col) not in self.used_grid_cells
+                if is_first_assignment:
+                    self.used_grid_cells.add((grid_row, grid_col))
+                
+                # Calculate grid box dimensions
+                box_height = self.monitor_height // self.grid_height
+                box_width = self.monitor_width // self.grid_width
+                
+                # Calculate coordinates for the grid box
+                y_start = grid_row * box_height
+                y_end = min((grid_row + 1) * box_height, self.monitor_height)
+                x_start = grid_col * box_width
+                x_end = min((grid_col + 1) * box_width, self.monitor_width)
+                
+                box_height_actual = y_end - y_start
+                box_width_actual = x_end - x_start
+            
             for i in range(min_len):
-                # Ensure mask is 3D for broadcasting with RGB frames.
-                mask = masks[i][:, :, np.newaxis] if masks[i].ndim == 2 else masks[i]
-
-                # Convert frames to float32 for blending calculations.
-                frame1 = self.current_frames[i].astype(np.float32)
-                frame2 = new_frames[i].astype(np.float32)
-
-                # Blend frames using mask and alpha.
-                blended = frame1 * (1 - mask * self.alpha) + frame2 * (mask * self.alpha)
-
-                # Clip result to 0-255 and convert back to uint8.
-                blended_frames.append(np.clip(blended, 0, 255).astype(np.uint8))
+                if self.grid_enabled:
+                    current_frame = self.current_frames[i].copy()
+                    new_frame = new_frames[i]
+                    
+                    # Resize new frame to fit the grid box
+                    resized_new_frame = cv2.resize(new_frame, (box_width_actual, box_height_actual))
+                    
+                    if is_first_assignment:
+                        # First time assignment: place video directly without segmentation
+                        current_frame[y_start:y_end, x_start:x_end] = resized_new_frame
+                    else:
+                        # Subsequent assignment: use segmentation mask for blending
+                        mask = masks[i]
+                        resized_mask = cv2.resize(mask, (box_width_actual, box_height_actual))
+                        
+                        # Ensure mask is 3D for broadcasting
+                        if resized_mask.ndim == 2:
+                            resized_mask = resized_mask[:, :, np.newaxis]
+                        
+                        # Blend using segmentation mask
+                        current_box = current_frame[y_start:y_end, x_start:x_end].astype(np.float32)
+                        new_box = resized_new_frame.astype(np.float32)
+                        
+                        blended_box = current_box * (1 - resized_mask * self.alpha) + new_box * (resized_mask * self.alpha)
+                        blended_box = np.clip(blended_box, 0, 255).astype(np.uint8)
+                        
+                        current_frame[y_start:y_end, x_start:x_end] = blended_box
+                    
+                    blended_frames.append(current_frame)
+                    
+                else:
+                    # Original blending logic (non-grid mode)
+                    mask = masks[i][:, :, np.newaxis] if masks[i].ndim == 2 else masks[i]
+                    frame1 = self.current_frames[i].astype(np.float32)
+                    frame2 = new_frames[i].astype(np.float32)
+                    blended = frame1 * (1 - mask * self.alpha) + frame2 * (mask * self.alpha)
+                    blended_frames.append(np.clip(blended, 0, 255).astype(np.uint8))
 
         else:
-            blended_frames = new_frames
+            if self.grid_enabled and self.grid_height and self.grid_width:
+                # For first frame in grid mode, choose random position
+                grid_row = random.randint(0, self.grid_height - 1)
+                grid_col = random.randint(0, self.grid_width - 1)
+                self.used_grid_cells.add((grid_row, grid_col))
+                
+                box_height = self.monitor_height // self.grid_height
+                box_width = self.monitor_width // self.grid_width
+                
+                y_start = grid_row * box_height
+                y_end = min((grid_row + 1) * box_height, self.monitor_height)
+                x_start = grid_col * box_width
+                x_end = min((grid_col + 1) * box_width, self.monitor_width)
+                
+                box_height_actual = y_end - y_start
+                box_width_actual = x_end - x_start
+                
+                blended_frames = []
+                for new_frame in new_frames:
+                    empty_frame = np.zeros((self.monitor_height, self.monitor_width, 3), dtype=np.uint8)
+                    
+                    # Resize and place new frame in grid box (no segmentation for first assignment)
+                    resized_new_frame = cv2.resize(new_frame, (box_width_actual, box_height_actual))
+                    empty_frame[y_start:y_end, x_start:x_end] = resized_new_frame
+                    blended_frames.append(empty_frame)
+                
+            else:
+                blended_frames = new_frames
 
-        # Atomically swap blended frames into shared buffer.
+        # Atomically swap blended frames into shared buffer
         with self.lock:
             self.current_frames = blended_frames
+
 
 
     def record_new_video(self):

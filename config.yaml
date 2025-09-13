@@ -1,8 +1,12 @@
 # Screen rotation
-rotation: left
+rotation: normal #left
 
 # Camera rotation. Right, left, normal.
-camera_rotation: left
+camera_rotation: normal #left
+
+# If displaying as a grid, use ints. Otherwise None or 1,1
+grid_height: 1
+grid_width: 1
 
 # The duration of each new recording (seconds)
 recording_duration: 5

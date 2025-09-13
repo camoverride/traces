@@ -38,26 +38,19 @@ if __name__ == "__main__":
     # Hide the cursor.
     os.system("unclutter -idle 0 &")
 
-    # Make the display fullscreen.
-    # cv2.namedWindow(
-    #     "Display Image",
-    #     cv2.WINDOW_NORMAL)
-    # cv2.setWindowProperty(
-    #     "Display Image",
-    #     cv2.WND_PROP_FULLSCREEN,
-    #     cv2.WINDOW_FULLSCREEN)
-
     # Initialize blender object.
     blender = ThreadedFaceBlender(
         monitor_width=config["monitor_width"],
         monitor_height=config["monitor_height"],
-        frame_rotation=config["camera_rotation"],
+        frame_rotation=None,#config["camera_rotation"], # not sure if this is needed!
         record_seconds=config["recording_duration"],
         alpha=config["temporal_alpha"],
         fps=config["fps"],
         blur_size=config["blur_size"],
         min_area=config["min_area"],
-        temporal_alpha=config["temporal_alpha"])
+        temporal_alpha=config["temporal_alpha"],
+        grid_height=config["grid_height"],
+        grid_width=config["grid_width"])
 
     # Run!
     blender.run()

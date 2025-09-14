@@ -2,6 +2,10 @@
 
 Ghostly videos of people in a "mirror."
 
+![Video of traces from gallery](traces.gif)
+
+See `__random_circles.py` for a variation of this project.
+
 
 ## Setup
 

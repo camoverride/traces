@@ -23,5 +23,7 @@ blur_size: 11
 min_area: 500
 temporal_alpha: 0.8
 
-# FPS. NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
+# FPS. NOTE: should eventually remove and infer num
+# frames based on camera's natural frame rate.
+# NOTE: this has an unpredictable effect.
 fps: 10

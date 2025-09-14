@@ -2,6 +2,7 @@ import cv2
 import os
 import platform
 import re
+import numpy as np
 import subprocess
 import time
 
@@ -25,23 +26,28 @@ def set_up_display(operating_system : str) -> None:
     None
         Creates a fullscreen canvas for displaying images.
     """
-    # This is an absolutely disgusting hack to get fullscreen enables.
-    os.environ["DISPLAY"] = ':0'
-    os.environ["QT_QPA_PLATFORM"] = "xcb"  # Force Qt to use X11
-    os.environ["GDK_BACKEND"] = "x11"      # Force GTK to use X11
-    time.sleep(5)
-    import numpy as np
+    # This is an absolutely disgusting hack to get fullscreen enabled.
+    if operating_system == "ubuntu":
+        os.environ["DISPLAY"] = ':0'
+        os.environ["QT_QPA_PLATFORM"] = "xcb"  # Force Qt to use X11
+        os.environ["GDK_BACKEND"] = "x11"      # Force GTK to use X11
+        time.sleep(5)
 
-    # Create window as normal first
-    cv2.namedWindow("Display Image", cv2.WINDOW_NORMAL)
+        # Create window as normal first.
+        cv2.namedWindow("Display Image", cv2.WINDOW_NORMAL)
 
-    # Show an image first, THEN set fullscreen
-    dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
-    cv2.imshow("Display Image", dummy_image)
-    cv2.waitKey(100)  # Brief wait to ensure window is created
+        # Show an image first, THEN set fullscreen.
+        dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
+        cv2.imshow("Display Image", dummy_image)
 
-    # Now set fullscreen
-    cv2.setWindowProperty("Display Image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        # Brief wait to ensure window is created.
+        cv2.waitKey(100)
+
+        # Now set fullscreen.
+        cv2.setWindowProperty(
+            "Display Image",
+            cv2.WND_PROP_FULLSCREEN,
+            cv2.WINDOW_FULLSCREEN)
 
 
 def get_os_name() -> str:
@@ -67,10 +73,10 @@ def get_os_name() -> str:
     ValueError
         If the specified operating system is not supported.
     """
-    # Get theb system.
+    # Get the system.
     system = platform.system()
 
-    # MacOs
+    # MacOS
     if system == "Darwin":
         operating_system = "macos"
 
@@ -121,7 +127,7 @@ def get_display_info(operating_system : str) -> dict:
     if operating_system not in ["raspbian", "ubuntu", "macos"]:
         raise ValueError(f"Unsupported operating system: '{operating_system}'")
 
-    # MacOS
+    # MacOS.
     if operating_system == "macos":
         # Use system_profiler to get display info.
         output = subprocess.check_output(
@@ -133,7 +139,7 @@ def get_display_info(operating_system : str) -> dict:
         # The output device doesn't matter for MacOS
         output_device = "NA"
 
-    # Raspbian
+    # Raspbian.
     elif operating_system == "raspbian":
         # Use fbset to get monitor dimensions.
         output = subprocess.check_output(["fbset"], text=True)
@@ -142,12 +148,11 @@ def get_display_info(operating_system : str) -> dict:
             width, height = map(int, match.groups())
 
         # Grep through connected displays to get the correct one.
-        # TODO: check on Raspbian.
         command = "DISPLAY=:0 xrandr | grep ' connected'"
         result = subprocess.check_output(command, shell=True, text=True)
         output_device = result.split(" ")[0]
 
-    # Ubuntu
+    # Ubuntu.
     elif operating_system == "ubuntu":
         # Use xrandr to get monitor dimensions.
         env = os.environ.copy()
@@ -178,9 +183,9 @@ def get_display_info(operating_system : str) -> dict:
     return display_info
 
 
-
-def rotate_screen(operating_system : str,
-                  rotation: str):
+def rotate_screen(
+    operating_system : str,
+    rotation: str) -> None:
     """
     Rotates the screen to the desired angle.
 
@@ -192,15 +197,17 @@ def rotate_screen(operating_system : str,
             - "raspbian"
             - "ubuntu"
             - "macos"
-
-    Rotation
-    --------
-    str
+    rotation : str
         Current options are:
             - "left"
             - "right"
             - "flip"
             - "normal" (no rotation)
+
+    Returns
+    -------
+    None
+        Rotates the monitor.
     """
     display_info = get_display_info(operating_system=operating_system)
 
@@ -236,5 +243,5 @@ def rotate_screen(operating_system : str,
 
     # MacOS.
     elif operating_system == "macos":
-        # MacOs is for testing only.
+        # MacOS is for testing only.
         pass

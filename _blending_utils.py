@@ -378,11 +378,26 @@ class ThreadedFaceBlender:
 
         Runs in a separate thread.
         """
+        failed_reads = 0
+        MAX_FAILED_READS = 3000
+
         # Main loop: continuously read frames from webcam.
         while self.running:
             ret, frame = self.cap.read()
+
             if not ret:
+                # Check to see if camera fails.
+                failed_reads += 1
+                print(f"Warning: Failed to read frame {failed_reads} times in a row")
+                time.sleep(0.1)
+
+                if failed_reads >= MAX_FAILED_READS:
+                    print("Too many failed reads, attempting to reset camera")
+                    self.cap.release()
+                    failed_reads = 0
                 continue
+
+            failed_reads = 0
 
             # Rotate the image, as the camera itself might be rotated.
             if self.frame_rotation == "right":

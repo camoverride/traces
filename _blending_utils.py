@@ -194,8 +194,10 @@ class ThreadedFaceBlender:
         self.selfie_segmentation = \
             self.mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
         
-        # NOTE: hard-coded values for Logitech Brio.
+        # NOTE: assumes only one webcam is conected.
         device_index = 0
+
+        # NOTE: hard-coded values for 4k webcam.
         max_width = 4096
         max_height = 2160
 

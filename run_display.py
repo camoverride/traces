@@ -45,7 +45,7 @@ if __name__ == "__main__":
     blender = ThreadedFaceBlender(
         monitor_width=config["monitor_width"],
         monitor_height=config["monitor_height"],
-        frame_rotation=None,#config["camera_rotation"], # not sure if this is needed!
+        frame_rotation=config["camera_rotation"],
         record_seconds=config["recording_duration"],
         alpha=config["temporal_alpha"],
         fps=config["fps"],

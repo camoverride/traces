@@ -1,8 +1,8 @@
 # Screen rotation
-rotation: normal #left
+rotation: left
 
 # Camera rotation. Right, left, normal.
-camera_rotation: normal #left
+camera_rotation: left
 
 # If displaying as a grid, use ints. Otherwise None or 1,1
 grid_height: 1

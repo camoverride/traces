@@ -23,5 +23,8 @@ blur_size: 11
 min_area: 500
 temporal_alpha: 0.8
 
-# FPS. NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
+# NOTE: should eventually remove and infer num frames based on camera's natural frame rate.
 fps: 10
+
+# NOTE: this solves the problem where the code starts but the monitor is not yet turned on.
+screen_rotation_freq: 1

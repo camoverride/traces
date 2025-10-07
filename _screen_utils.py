@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import subprocess
+import threading
 import time
 
 
@@ -178,7 +179,6 @@ def get_display_info(operating_system : str) -> dict:
     return display_info
 
 
-
 def rotate_screen(operating_system : str,
                   rotation: str):
     """
@@ -238,3 +238,41 @@ def rotate_screen(operating_system : str,
     elif operating_system == "macos":
         # MacOs is for testing only.
         pass
+
+
+def start_rotation_timer(
+    operating_system : str,
+    rotation : str,
+    interval_minutes : int) -> None:
+    """
+    Starts a background timer that periodically calls `rotate_screen`.
+
+    This function runs non-blocking and will continuously call `rotate_screen`
+    every `interval_minutes` minutes.
+
+    Parameters
+    ----------
+    operating_system : str
+        The operating system name. Expected values:
+            - "raspbian"
+            - "ubuntu"
+            - "macos"
+    rotation : str
+        The desired screen rotation. Expected values:
+            - "left"
+            - "right"
+            - "flip"
+            - "normal"
+    interval_minutes : int
+        The interval in minutes between consecutive rotations.
+
+    Returns
+    -------
+    None
+        Starts a thread running the function.
+    """
+    def run() -> None:
+        rotate_screen(operating_system, rotation)
+        threading.Timer(interval_minutes * 60, run).start()
+
+    run()

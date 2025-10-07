@@ -1,7 +1,7 @@
 import logging
 import os
 import yaml
-from _screen_utils import get_os_name, set_up_display, rotate_screen
+from _screen_utils import get_os_name, set_up_display, rotate_screen_periodically
 from _blending_utils import ThreadedFaceBlender
 
 
@@ -30,10 +30,13 @@ if __name__ == "__main__":
     # Set up the display to show images.
     set_up_display(operating_system=os_name)
 
-    # Rotate the screen.
-    rotate_screen(
+    # Rotate the screen every few minutes.
+    # NOTE: this solves the problem where the code starts but the monitor
+    # is not yet turned on.
+    rotate_screen_periodically(
         operating_system=os_name,
-        rotation=config["rotation"])
+        rotation=config["rotation"],
+        interval_minutes=config["screen_rotation_freq"])
 
     # Hide the cursor.
     os.system("unclutter -idle 0 &")

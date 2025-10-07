@@ -223,8 +223,8 @@ def rotate_screen(operating_system : str,
     # Ubuntu.
     elif operating_system == "ubuntu":
         # Set to normal.
-        os.system(f"./gnome-randr.py --output {display_info['output_device']} \
-                    --rotate normal")
+        # os.system(f"./gnome-randr.py --output {display_info['output_device']} \
+        #             --rotate normal")
 
         time.sleep(2)
 

@@ -240,7 +240,7 @@ def rotate_screen(operating_system : str,
         pass
 
 
-def start_rotation_timer(
+def rotate_screen_periodically(
     operating_system : str,
     rotation : str,
     interval_minutes : int) -> None:

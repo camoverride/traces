@@ -53,7 +53,9 @@ if __name__ == "__main__":
         min_area=config["min_area"],
         temporal_alpha=config["temporal_alpha"],
         grid_height=config["grid_height"],
-        grid_width=config["grid_width"])
+        grid_width=config["grid_width"],
+        backup_video_path="video_backup.npz",
+        backup_video_save_frequency=config["backup_video_save_freq"])
 
     # Run!
     blender.run()

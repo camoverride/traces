@@ -28,3 +28,6 @@ fps: 10
 
 # NOTE: this solves the problem where the code starts but the monitor is not yet turned on.
 screen_rotation_freq: 1
+
+# How often do we save a backup video (minutes)?
+backup_video_save_freq : 60

@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import os
 import random
 import threading
 import time
@@ -141,7 +142,9 @@ class ThreadedFaceBlender:
             min_area,
             temporal_alpha,
             grid_height : Optional[int],
-            grid_width : Optional[int]):
+            grid_width : Optional[int],
+            backup_video_path: Optional[str] = None,
+            backup_video_save_frequency: Optional[int] = None):
         """
         Initialize the threaded face blender.
 
@@ -169,6 +172,10 @@ class ThreadedFaceBlender:
             Number of boxes on the height. If None, then grid is disabled.
         grid_width : Optional[int]
             Number of boxes on the width. If None, then grid is disabled.
+        backup_video_path : Optional[str]
+            Where the optional backup video will be saved.
+        backup_video_save_frequency : Optional[int]
+            How frequently a backup video is saved (minutes).
         """
         # Add class attributes.
         self.monitor_height = monitor_height
@@ -181,6 +188,8 @@ class ThreadedFaceBlender:
         self.grid_width = grid_width
         self.grid_enabled = grid_height is not None and grid_width is not None
         self.used_grid_cells = set()
+        self.backup_video_path = backup_video_path
+        self.backup_video_save_frequency = backup_video_save_frequency
 
         # Initialize smoother for mask processing.
         self.smoother = MaskSmoother(
@@ -232,6 +241,44 @@ class ThreadedFaceBlender:
         # Lock for atomic access to current_frames.
         self.lock = threading.Lock()
         self.running = True
+
+        # Load backup video if it exists.
+        if self.backup_video_path and os.path.exists(self.backup_video_path):
+            try:
+                print(f"Loading video from backup: {self.backup_video_path}")
+                data = np.load(self.backup_video_path, allow_pickle=True)
+                with self.lock:
+                    self.current_frames = list(data['frames'])
+                print(f"Loaded {len(self.current_frames)} frames from backup.")
+            except Exception as e:
+                print(f"Failed to load backup video: {e}")
+
+        # Periodically backup videos.
+        if self.backup_video_path and self.backup_video_save_frequency:
+            threading.Thread(target=self._periodic_backup_thread, daemon=True).start()
+
+
+    def _periodic_backup_thread(self):
+        """
+        Periodically saves the current frames to the backup path.
+        Runs in a background daemon thread.
+        """
+        if (not self.backup_video_save_frequency) or (not self.backup_video_path):
+            print("Either the backup video path or frequency are not defined," \
+                  "so this function should not be getting called!")
+            raise ValueError
+    
+        while self.running:
+            time.sleep(self.backup_video_save_frequency * 60)
+
+            with self.lock:
+                frames_to_save = list(self.current_frames)
+
+            try:
+                np.savez_compressed(self.backup_video_path, frames=frames_to_save)
+                print(f"[Backup] Saved {len(frames_to_save)} frames to {self.backup_video_path}")
+            except Exception as e:
+                print(f"[Backup] Failed to save frames: {e}")
 
 
     def detect_face(self, frame):

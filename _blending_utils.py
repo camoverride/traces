@@ -342,7 +342,7 @@ class ThreadedFaceBlender:
                 box_width_actual = x_end - x_start
 
             print("STARTING COMPOSITING!")
-            start_time = datetime.datetime.now()
+            compositing_start_time = datetime.datetime.now()
 
             for i in range(min_len):
                 if self.grid_enabled:
@@ -383,6 +383,12 @@ class ThreadedFaceBlender:
                     blended = frame1 * (1 - mask * self.alpha) + frame2 * (mask * self.alpha)
                     blended_frames.append(np.clip(blended, 0, 255).astype(np.uint8))
 
+
+            
+            compositing_end_time = datetime.datetime.now()
+
+            print(f"Took {(compositing_end_time - compositing_start_time).seconds} seconds")
+
         else:
             if self.grid_enabled and self.grid_height and self.grid_width:
                 # For first frame in grid mode, choose random position
@@ -416,11 +422,6 @@ class ThreadedFaceBlender:
         # Atomically swap blended frames into shared buffer
         with self.lock:
             self.current_frames = blended_frames
-
-        end_time = datetime.datetime.now()
-
-        print(f"Took {(end_time-start_time).seconds} seconds")
-
 
 
     def record_new_video(self):

@@ -1,4 +1,5 @@
 import cv2
+import datetime
 import mediapipe as mp
 import numpy as np
 import os
@@ -339,7 +340,10 @@ class ThreadedFaceBlender:
                 
                 box_height_actual = y_end - y_start
                 box_width_actual = x_end - x_start
-            
+
+            print("STARTING COMPOSITING!")
+            start_time = datetime.datetime.now()
+
             for i in range(min_len):
                 if self.grid_enabled:
                     current_frame = self.current_frames[i].copy()
@@ -412,6 +416,10 @@ class ThreadedFaceBlender:
         # Atomically swap blended frames into shared buffer
         with self.lock:
             self.current_frames = blended_frames
+
+        end_time = datetime.datetime.now()
+
+        print(f"Took {(end_time-start_time).seconds} seconds")
 
 
 

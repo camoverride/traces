@@ -8,6 +8,43 @@ import threading
 import time
 from typing import Optional
 
+import cupy as cp
+
+
+def blend_gpu(
+        current_frame: cp.ndarray,
+        new_frame: cp.ndarray,
+        mask: cp.ndarray,
+        alpha: float = 0.5):
+    # Original blending logic (non-grid mode)
+    mask = mask[:, :, cp.newaxis] if mask.ndim == 2 else mask
+
+    frame1 = current_frame.astype(cp.float32)
+    frame2 = new_frame.astype(cp.float32)
+
+    # We want to calculate: frame1 * (1 - (mask * alpha)) + (frame2 * (mask * alpha))
+    # but memory is very expensive, so we want to do as much in place as possible
+
+    # pull (mask * alpha) out of the expression and keep mask in-place
+    mask *= alpha
+
+    # blend frame2 in place with mask
+    frame2 *= mask
+
+    # Now that frame2 is done with mask, calculate 1 - (mask*alpha) in-place
+    # which is the same as (-mask) + 1
+    mask *= -1
+    mask += 1
+
+    # blend frame1 in place
+    frame1 *= mask
+
+    # now frame1 and frame2 are blended and can be concattenated
+    frame1 += frame2
+
+    converted = cp.clip(frame1, 0, 255).astype(cp.uint8)
+    return converted
+
 
 
 class MaskSmoother:
@@ -100,26 +137,12 @@ class MaskSmoother:
 
         else:
             # EMA: smooth previous and current frame masks.
+
             final_mask = self.temporal_alpha * self.prev_mask + (1 - self.temporal_alpha) * smoothed
 
         self.prev_mask = final_mask
 
-        return final_mask.astype(np.float32)
-
-
-    def smooth_masks(self, masks):
-        """
-        Smooth a list of masks sequentially.
-
-        Applies smooth_single() to each mask in the list.
-        Useful for processing video frames.
-        """
-        smoothed_list = []
-
-        for mask in masks:
-            smoothed_list.append(self.smooth_single(mask))
-
-        return smoothed_list
+        return final_mask
 
 
 class ThreadedFaceBlender:
@@ -205,7 +228,7 @@ class ThreadedFaceBlender:
             self.mp_selfie_segmentation.SelfieSegmentation(model_selection=1)
         
         # NOTE: assumes only one webcam is conected.
-        device_index = 0
+        device_index = 2
 
         # NOTE: hard-coded values for 4k webcam.
         max_width = 4096
@@ -238,6 +261,7 @@ class ThreadedFaceBlender:
 
         # Thread-safe storage for video frames.
         self.current_frames = []
+        self.current_gpu_frames = []
 
         # Lock for atomic access to current_frames.
         self.lock = threading.Lock()
@@ -303,6 +327,22 @@ class ThreadedFaceBlender:
 
         return results.detections is not None
 
+    def blend_gpu(
+        self,
+        new_frames : list[cp.ndarray],
+        masks: list[cp.ndarray]):
+
+        if not self.current_gpu_frames:
+            self.current_gpu_frames = new_frames
+            return
+
+        blended = list(
+            map(lambda args: blend_gpu(*args, alpha=self.alpha),
+                zip(self.current_gpu_frames, new_frames, masks)))
+
+        with self.lock:
+            self.current_frames = list(map(cp.asnumpy, blended))
+            self.current_gpu_frames = blended
 
     def blend(
         self,
@@ -380,8 +420,28 @@ class ThreadedFaceBlender:
                     mask = masks[i][:, :, np.newaxis] if masks[i].ndim == 2 else masks[i]
                     frame1 = self.current_frames[i].astype(np.float32)
                     frame2 = new_frames[i].astype(np.float32)
-                    blended = frame1 * (1 - mask * self.alpha) + frame2 * (mask * self.alpha)
-                    blended_frames.append(np.clip(blended, 0, 255).astype(np.uint8))
+
+                    # We want to calculate: frame1 * (1 - (mask * alpha)) + (frame2 * (mask * alpha))
+                    # but memory is very expensive, so we want to do as much in place as possible
+
+                    # pull (mask * alpha) out of the expression and keep mask in-place
+                    mask *= self.alpha
+
+                    # blend frame2 in place with mask
+                    frame2 *= mask
+
+                    # Now that frame2 is done with mask, calculate 1 - (mask*alpha) in-place
+                    # which is the same as (-mask) + 1
+                    mask *= -1
+                    mask += 1
+
+                    # blend frame1 in place
+                    frame1 *= mask
+
+                    # now frame1 and frame2 are blended and can be concattenated
+                    frame1 += frame2
+                    
+                    blended_frames.append(np.clip(frame1, 0, 255).astype(np.uint8))
 
 
             
@@ -518,11 +578,14 @@ class ThreadedFaceBlender:
                     time.sleep(1 / self.fps)
 
                 # Smooth recorded masks.
-                smoothed_masks = self.smoother.smooth_masks(masks)
+                smoothed_masks = list(map(self.smoother.smooth_single, masks))
 
                 start_time = time.time()
                 # Blend new video segment into shared buffer.
-                self.blend(new_frames, smoothed_masks)
+                gpu_frames = list(map(cp.asarray, new_frames))
+                gpu_masks = list(map(cp.asarray, masks))
+
+                self.blend_gpu(gpu_frames, gpu_masks)
                 end_time = time.time()
 
                 print(f"Blending complete in {end_time - start_time:.3f}. Now looping the blended video.")
@@ -549,32 +612,31 @@ class ThreadedFaceBlender:
                 if self.current_frames:
                     frames_copy = self.current_frames  # Read atomically
 
-            if frames_copy:
-    
-                # Ping-pong loop: reverse direction when reaching end or start.
-                if index >= len(frames_copy):
-                    index = len(frames_copy) - 1
-                    direction = -1
-
-                elif index < 0:
-                    index = 0
-                    direction = 1
-
-                frame = frames_copy[index]
-
-                # Display current frame.
-                cv2.imshow("Display Image", frame)
-
-                # Wait for key press to maintain FPS; quit if 'q' pressed.
-                key = cv2.waitKey(int(1000 / self.fps))
-                if key & 0xFF == ord('q'):
-                    self.running = False
-                    break
-
-                index += direction
-            else:
+            # no frames yet, sleep and continue
+            if not frames_copy:
                 time.sleep(0.05)
+                continue
 
+            # Ping-pong loop: reverse direction when reaching end or start.
+            if index >= len(frames_copy):
+                index = len(frames_copy) - 1
+                direction = -1
+            elif index < 0:
+                index = 0
+                direction = 1
+
+            # TODO:(ryan-berger) this read tears in CPU mode
+            frame = frames_copy[index]
+
+            # Display current frame.
+            cv2.imshow("Display Image", frame)
+
+            # Wait for key press to maintain FPS; quit if 'q' pressed.
+            key = cv2.waitKey(int(1000 / self.fps))
+            if key & 0xFF == ord('q'):
+                self.running = False
+                break
+            index += direction
 
     def run(self):
         """

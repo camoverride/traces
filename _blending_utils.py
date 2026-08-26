@@ -393,10 +393,10 @@ class ThreadedFaceBlender:
                     # Now that frame2 is done with mask, calculate 1 - (mask*alpha) in-place
                     # which is the same as (-mask) + 1
                     mask *= -1
-                    blended_mask += 1
+                    mask += 1
 
                     # blend frame1 in place
-                    frame1 *= blended_mask
+                    frame1 *= mask
 
                     # now frame1 and frame2 are blended and can be concattenated
                     frame1 += frame2

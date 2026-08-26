@@ -380,8 +380,28 @@ class ThreadedFaceBlender:
                     mask = masks[i][:, :, np.newaxis] if masks[i].ndim == 2 else masks[i]
                     frame1 = self.current_frames[i].astype(np.float32)
                     frame2 = new_frames[i].astype(np.float32)
-                    blended = frame1 * (1 - mask * self.alpha) + frame2 * (mask * self.alpha)
-                    blended_frames.append(np.clip(blended, 0, 255).astype(np.uint8))
+
+                    # We want to calculate: frame1 * (1 - (mask * alpha)) + (frame2 * (mask * alpha))
+                    # but memory is very expensive, so we want to do as much in place as possible
+
+                    # pull (mask * alpha) out of the expression and keep mask in-place
+                    mask *= self.alpha
+
+                    # blend frame2 in place with mask
+                    frame2 *= mask
+
+                    # Now that frame2 is done with mask, calculate 1 - (mask*alpha) in-place
+                    # which is the same as (-mask) + 1
+                    mask *= -1
+                    blended_mask += 1
+
+                    # blend frame1 in place
+                    frame1 *= blended_mask
+
+                    # now frame1 and frame2 are blended and can be concattenated
+                    frame1 += frame2
+                    
+                    blended_frames.append(np.clip(frame1, 0, 255).astype(np.uint8))
 
 
             
